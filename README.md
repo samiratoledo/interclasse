@@ -64,7 +64,17 @@ O JavaScript não será responsável pela fonte oficial do tempo ou do placar. O
 - Preparar e acompanhar integrações e importações.
 - Cadastrar e atualizar links de transmissão do YouTube.
 
-### 4.3 Árbitro
+### 4.3 Representante de turma
+
+- Acessar o painel de representante da própria turma.
+- Cadastrar e enviar atletas para inscrição nas modalidades disponíveis.
+- Consultar os atletas inscritos e o status de aprovação de cada inscrição.
+- Acompanhar as modalidades em que sua turma está inscrita.
+- Consultar partidas, horários e resultados relacionados à própria turma.
+- Corrigir ou atualizar informações das inscrições, conforme as permissões definidas.
+- Não administrar outras turmas, usuários ou configurações gerais do evento.
+
+### 4.4 Árbitro
 
 - Acessar partidas atribuídas ou autorizadas.
 - Controlar o cronômetro e os períodos conforme suas permissões.
