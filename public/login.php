@@ -38,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erro = 'Informe um usuário válido e sua senha.';
     } else {
         try {
-            $sql = 'SELECT id, nome, usuario, senha_hash, perfil, turma_id
-                    FROM usuarios
-                    WHERE usuario = :usuario AND ativo = 1
-                    LIMIT 1';
+            $sql = 'SELECT id, nome, senha_hash, perfil, turma_id
+        FROM usuarios
+        WHERE nome = :nome AND ativo = 1
+        LIMIT 1';
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                'usuario' => $nomeUsuario
+                'nome' => $nomeUsuario
             ]);
 
             $conta = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -68,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['usuario'] = [
                     'id' => (int) $conta['id'],
                     'nome' => $conta['nome'],
-                    'usuario' => $conta['usuario'],
                     'perfil' => $conta['perfil'],
                     'turma_id' => $conta['turma_id'] !== null
                         ? (int) $conta['turma_id']
