@@ -191,6 +191,33 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 margin: 10px auto;
             }
         }
+
+        .logout-form {
+            margin-left: auto;
+        }
+
+        .main-nav .logout {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #ffe0dc;
+            text-decoration: none;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .main-nav .logout:hover {
+            background: #ffffff20;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .logout-form {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 
@@ -199,8 +226,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
         <div class="header-container">
             <div class="header-top">
                 <div class="branding">
-                    <img class="logo" src="<?= $baseUrl ?>/public/assets/logo-etec-zl.png"
-                        alt="Logo ETEC Zona Leste">
+                    <img class="logo" src="<?= $baseUrl ?>/public/assets/logo-etec-zl.png" alt="Logo ETEC Zona Leste">
 
                     <div>
                         <p class="brand-title">Interclasse ETEC Zona Leste</p>
@@ -218,13 +244,23 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
 
             <nav class="main-nav">
                 <a href="<?= $baseUrl ?>/public/admin/index.php">Painel</a>
+                <a href="<?= $baseUrl ?>/public/admin/regulamento.php">Regulamento</a>
                 <a href="<?= $baseUrl ?>/public/admin/turmas.php">Turmas</a>
                 <a href="<?= $baseUrl ?>/public/admin/modalidades.php">Modalidades</a>
                 <a href="<?= $baseUrl ?>/public/admin/inscricoes.php">Inscrições</a>
                 <a href="<?= $baseUrl ?>/public/admin/aprovar-atletas.php">Aprovar atletas</a>
                 <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
                 <a href="<?= $baseUrl ?>/public/admin/partidas.php">Partidas</a>
-                <a class="logout" href="<?= $baseUrl ?>/public/logout.php">Sair</a>
+                <form action="<?= $baseUrl ?>/public/logout.php" method="POST" class="logout-form">
+
+                    <input type="hidden" name="token_csrf"
+                        value="<?= htmlspecialchars(gerarTokenCsrf(), ENT_QUOTES, 'UTF-8') ?>">
+
+                    <button type="submit" class="logout">
+                        Sair
+                    </button>
+
+                </form>
             </nav>
         </div>
     </header>

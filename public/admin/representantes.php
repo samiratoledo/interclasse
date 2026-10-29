@@ -11,6 +11,7 @@ $sucesso = '';
 $senhaGerada = '';
 $nomeCriado = '';
 $turmaCriada = '';
+$usuarioCriado = '';
 $linkSistema = 'http://localhost/interclasse-etec/public/';
 
 $turmas = [];
@@ -36,9 +37,16 @@ function gerarSenhaRepresentante(): string
     return 'Etec-' . substr($senha, 0, 4) . '-' . substr($senha, 4, 4);
 }
 
+function gerarUsuarioRepresentante(string $nomeTurma): string
+{
+    return strtolower(
+        preg_replace('/[^a-zA-Z0-9]/', '', $nomeTurma)
+    );
+}
+
 function redirecionarRepresentantes(string $mensagem): never
 {
-    header('Location: criar-representantes.php?sucesso=' . urlencode($mensagem));
+    header('Location: representantes.php?sucesso=' . urlencode($mensagem));
     exit;
 }
 
@@ -57,7 +65,9 @@ try {
         $acao = $_POST['acao'] ?? 'cadastrar';
 
         if ($acao === 'cadastrar') {
+            // Recebe os dados do formulário.
             $nome = trim((string) ($_POST['nome'] ?? ''));
+
             $turmaId = filter_var(
                 $_POST['turma_id'] ?? '',
                 FILTER_VALIDATE_INT
@@ -73,15 +83,10 @@ try {
                 throw new RuntimeException('Selecione uma turma válida.');
             }
 
-            $senhaGerada = gerarSenhaRepresentante();
-            $senhaHash = password_hash($senhaGerada, PASSWORD_DEFAULT);
-
-            if ($senhaHash === false) {
-                throw new RuntimeException('Não foi possível gerar a senha.');
-            }
-
+            // Inicia a transação.
             $pdo->beginTransaction();
 
+            // Busca a turma e verifica se já possui representante.
             $consulta = $pdo->prepare("
                 SELECT t.nome
                 FROM turmas t
@@ -97,6 +102,7 @@ try {
             ");
 
             $consulta->execute(['turma_id' => $turmaId]);
+
             $turma = $consulta->fetch(PDO::FETCH_ASSOC);
 
             if (!$turma) {
@@ -105,27 +111,61 @@ try {
                 );
             }
 
+            // Gera o usuário a partir do nome da turma.
+            // Exemplo: 1ADM-A gera 1adma.
+            $usuarioLogin = gerarUsuarioRepresentante($turma['nome']);
+
+            if ($usuarioLogin === '') {
+                throw new RuntimeException(
+                    'Não foi possível gerar o usuário a partir do nome da turma.'
+                );
+            }
+
+            if (strlen($usuarioLogin) > 50) {
+                throw new RuntimeException(
+                    'O usuário gerado ultrapassa o limite permitido.'
+                );
+            }
+
+            // Gera e protege a senha.
+            $senhaGerada = gerarSenhaRepresentante();
+            $senhaHash = password_hash($senhaGerada, PASSWORD_DEFAULT);
+
+            if ($senhaHash === false) {
+                throw new RuntimeException(
+                    'Não foi possível gerar a senha.'
+                );
+            }
+
+            // Insere o representante.
             $inserir = $pdo->prepare("
                 INSERT INTO usuarios
-                    (nome, senha_hash, perfil, turma_id, ativo)
+                    (nome, usuario_login, senha_hash, perfil, turma_id, ativo)
                 VALUES
-                    (:nome, :senha_hash, 'representante', :turma_id, 1)
+                    (:nome, :usuario_login, :senha_hash, 'representante', :turma_id, 1)
             ");
 
             $inserir->execute([
                 'nome' => $nome,
+                'usuario_login' => $usuarioLogin,
                 'senha_hash' => $senhaHash,
                 'turma_id' => $turmaId,
             ]);
 
+            // Confirma o cadastro.
             $pdo->commit();
 
             $nomeCriado = $nome;
             $turmaCriada = $turma['nome'];
+            $usuarioCriado = $usuarioLogin;
+
             $sucesso = 'Representante cadastrado com sucesso!';
 
         } elseif ($acao === 'alternar_status') {
-            $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
+            $id = filter_var(
+                $_POST['id'] ?? '',
+                FILTER_VALIDATE_INT
+            );
 
             if (!$id || $id <= 0) {
                 throw new RuntimeException('Representante inválido.');
@@ -139,10 +179,13 @@ try {
             ");
 
             $consulta->execute(['id' => $id]);
+
             $representante = $consulta->fetch(PDO::FETCH_ASSOC);
 
             if (!$representante) {
-                throw new RuntimeException('Representante não encontrado.');
+                throw new RuntimeException(
+                    'Representante não encontrado.'
+                );
             }
 
             $novoStatus = (int) $representante['ativo'] === 1 ? 0 : 1;
@@ -166,6 +209,7 @@ try {
         }
     }
 
+    // Mensagens após redirecionamento.
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $mensagens = [
             'cadastrado' => 'Representante cadastrado com sucesso!',
@@ -175,7 +219,7 @@ try {
         $sucesso = $mensagens[$_GET['sucesso'] ?? ''] ?? '';
     }
 
-    // Turmas disponíveis para cadastro.
+    // Busca as turmas disponíveis para cadastro.
     $stmt = $pdo->query("
         SELECT t.id, t.nome, t.periodo
         FROM turmas t
@@ -286,10 +330,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                 "DADOS DE ACESSO\n" .
                 "Nome: {$nomeCriado}\n" .
                 "Turma: {$turmaCriada}\n" .
-                "Senha inicial: {$senhaGerada}\n\n" .
+                "Usuário: {$usuarioCriado}\n" .
+                "Senha: {$senhaGerada}\n\n" .
                 "LINK PARA ACESSAR O SISTEMA:\n" .
                 "{$linkSistema}\n\n" .
-                "Acesse o sistema com seu nome e senha e guarde seus dados em segurança!";
+                "Acesse o sistema utilizando seu usuário e senha. Guarde seus dados em segurança!";
             ?>
 
             <p class="mb-3">
@@ -354,7 +399,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             Todas as turmas ativas já possuem representante ou não há turmas disponíveis.
         </div>
     <?php else: ?>
-        <form method="POST" action="criar-representantes.php">
+        <form method="POST" action="representantes.php">
             <input
                 type="hidden"
                 name="csrf_token"
@@ -399,8 +444,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </div>
 
             <div class="notification is-info is-light">
-                A senha será gerada automaticamente no padrão
-                <strong>Etec-XXXX-XXXX</strong> e armazenada de forma protegida.
+                O usuário será gerado automaticamente com base na turma.
+                Exemplo: <strong>1ADM-A → 1adma</strong>.
+
+                A senha seguirá o padrão
+                <strong>Etec-XXXX-XXXX</strong> e será armazenada de forma protegida.
             </div>
 
             <div class="field mt-4">
@@ -508,7 +556,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                 <div class="is-flex is-justify-content-center">
                                     <form
                                         method="POST"
-                                        action="criar-representantes.php"
+                                        action="representantes.php"
                                         onsubmit="return confirm('Deseja realmente <?= (int) $representante['ativo'] === 1 ? 'desativar' : 'reativar' ?> o acesso deste representante?');"
                                     >
                                         <input

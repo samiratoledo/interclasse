@@ -813,6 +813,14 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                         </button>
                                     </form>
 
+                                    <a class="button is-small is-success" href="../arbitro/partida.php?id=<?= (int) $p['id'] ?>">
+                                        Controlar partida
+                                    </a>
+
+                                    <a class="button is-small is-info" href="../partida.php?id=<?= (int) $p['id'] ?>" target="_blank" rel="noopener noreferrer">
+                                        Ver página pública
+                                    </a>
+
                                     <?php if (!in_array($p['status'], ['encerrada', 'cancelada'], true)): ?>
                                         <form method="POST" action="partidas.php"
                                               onsubmit="return confirm('Deseja cancelar esta partida?');">
