@@ -290,13 +290,13 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 </div>
 
 <?php if ($erro !== ''): ?>
-    <div class="notification is-danger is-light">
+    <div class="notification is-danger is-dark">
         <?= escapar($erro) ?>
     </div>
 <?php endif; ?>
 
 <?php if ($sucesso !== ''): ?>
-    <div class="notification is-success is-light">
+    <div class="notification is-success is-dark">
         <?= escapar($sucesso) ?>
     </div>
 <?php endif; ?>
@@ -337,9 +337,8 @@ require_once __DIR__ . '/../../includes/admin/header.php';
         <div class="columns is-multiline">
             <div class="column is-half">
                 <label class="label" for="nome">Nome da turma</label>
-                <input class="input" type="text" id="nome" name="nome"
-                       maxlength="30" placeholder="Ex.: 1º ADM-A"
-                       value="<?= escapar($nomeFormulario) ?>" required>
+                <input class="input" type="text" id="nome" name="nome" maxlength="30" placeholder="Ex.: 1º ADM-A"
+                    value="<?= escapar($nomeFormulario) ?>" required>
             </div>
 
             <div class="column is-half">
@@ -347,8 +346,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                 <div class="select is-fullwidth">
                     <select id="periodo" name="periodo" required>
                         <?php foreach ($periodos as $valor => $rotulo): ?>
-                            <option value="<?= escapar($valor) ?>"
-                                <?= $periodoFormulario === $valor ? 'selected' : '' ?>>
+                            <option value="<?= escapar($valor) ?>" <?= $periodoFormulario === $valor ? 'selected' : '' ?>>
                                 <?= escapar($rotulo) ?>
                             </option>
                         <?php endforeach; ?>
@@ -362,17 +360,14 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
             <?php if ($imagemFormulario): ?>
                 <div class="mb-3">
-                    <img
-                        src="<?= escapar($caminhoPublicoImagens . basename($imagemFormulario)) ?>"
-                        alt="Brasão atual da turma"
-                        style="max-width:120px;max-height:120px;object-fit:contain;"
-                    >
+                    <img src="<?= escapar($caminhoPublicoImagens . basename($imagemFormulario)) ?>"
+                        alt="Brasão atual da turma" style="max-width:120px;max-height:120px;object-fit:contain;">
                     <p class="help">Se não escolher outra imagem, o brasão atual será mantido.</p>
                 </div>
             <?php endif; ?>
 
             <input class="input" type="file" id="imagem" name="imagem"
-                   accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
             <p class="help">Formatos permitidos: JPG, PNG e WEBP. Máximo: 2 MB.</p>
         </div>
 
@@ -382,7 +377,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </button>
 
             <?php if ($turmaEdicao): ?>
-                <a class="button is-light" href="turmas.php">Cancelar edição</a>
+                <a class="button is-dark" href="turmas.php">Cancelar edição</a>
             <?php endif; ?>
         </div>
     </form>
@@ -397,7 +392,8 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                 <label class="label" for="filtro-periodo">Período</label>
                 <div class="select is-fullwidth">
                     <select id="filtro-periodo" name="periodo">
-                        <option value="todos" <?= $filtroPeriodo === 'todos' ? 'selected' : '' ?>>Todos os períodos</option>
+                        <option value="todos" <?= $filtroPeriodo === 'todos' ? 'selected' : '' ?>>Todos os períodos
+                        </option>
                         <option value="manha" <?= $filtroPeriodo === 'manha' ? 'selected' : '' ?>>Manhã</option>
                         <option value="tarde" <?= $filtroPeriodo === 'tarde' ? 'selected' : '' ?>>Tarde</option>
                     </select>
@@ -409,7 +405,8 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                 <div class="select is-fullwidth">
                     <select id="filtro-status" name="status">
                         <option value="ativas" <?= $filtroStatus === 'ativas' ? 'selected' : '' ?>>Somente ativas</option>
-                        <option value="inativas" <?= $filtroStatus === 'inativas' ? 'selected' : '' ?>>Somente inativas</option>
+                        <option value="inativas" <?= $filtroStatus === 'inativas' ? 'selected' : '' ?>>Somente inativas
+                        </option>
                         <option value="todas" <?= $filtroStatus === 'todas' ? 'selected' : '' ?>>Todas</option>
                     </select>
                 </div>
@@ -422,7 +419,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
     </form>
 
     <?php if ($turmas === []): ?>
-        <div class="notification is-light">
+        <div class="notification is-dark">
             Nenhuma turma encontrada para esses filtros.
         </div>
     <?php else: ?>
@@ -442,14 +439,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                         <tr>
                             <td>
                                 <?php if ($turma['imagem']): ?>
-                                    <img
-                                        src="<?= escapar($caminhoPublicoImagens . basename($turma['imagem'])) ?>"
-                                        alt="Brasão de <?= escapar($turma['nome']) ?>"
-                                        loading="lazy"
-                                        style="width:48px;height:48px;object-fit:contain;"
-                                    >
+                                    <img src="<?= escapar($caminhoPublicoImagens . basename($turma['imagem'])) ?>"
+                                        alt="Brasão de <?= escapar($turma['nome']) ?>" loading="lazy"
+                                        style="width:48px;height:48px;object-fit:contain;">
                                 <?php else: ?>
-                                    <span class="tag is-light">Sem brasão</span>
+                                    <span class="tag is-dark">Sem brasão</span>
                                 <?php endif; ?>
                             </td>
 
@@ -459,27 +453,28 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
                             <td>
                                 <?php if ((int) $turma['ativa'] === 1): ?>
-                                    <span class="tag is-success is-light">Ativa</span>
+                                    <span class="tag is-success is-dark">Ativa</span>
                                 <?php else: ?>
-                                    <span class="tag is-light">Inativa</span>
+                                    <span class="tag is-dark">Inativa</span>
                                 <?php endif; ?>
                             </td>
 
                             <td>
                                 <div class="is-flex is-justify-content-flex-end is-align-items-center" style="gap:8px;">
-                                    <a class="button is-small is-link is-light"
-                                       href="turmas.php?editar=<?= (int) $turma['id'] ?>">
+                                    <a class="button is-small is-link is-dark"
+                                        href="turmas.php?editar=<?= (int) $turma['id'] ?>">
                                         Editar
                                     </a>
 
                                     <form method="POST" action="turmas.php"
-                                          onsubmit="return confirm('Deseja alterar a situação desta turma?');">
+                                        onsubmit="return confirm('Deseja alterar a situação desta turma?');">
                                         <input type="hidden" name="token_csrf" value="<?= escapar(gerarTokenCsrf()) ?>">
                                         <input type="hidden" name="acao" value="alternar_status">
                                         <input type="hidden" name="id" value="<?= (int) $turma['id'] ?>">
 
-                                        <button class="button is-small <?= (int) $turma['ativa'] === 1 ? 'is-danger is-light' : 'is-success is-light' ?>"
-                                                type="submit">
+                                        <button
+                                            class="button is-small <?= (int) $turma['ativa'] === 1 ? 'is-danger is-dark' : 'is-success is-dark' ?>"
+                                            type="submit">
                                             <?= (int) $turma['ativa'] === 1 ? 'Desativar' : 'Ativar' ?>
                                         </button>
                                     </form>

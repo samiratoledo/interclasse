@@ -78,9 +78,9 @@ CREATE TABLE usuarios (
 
 -- 4. Cadastro das turmas
 INSERT INTO turmas (nome, periodo) VALUES
-('1º TEC', 'manha');
-('2º TEC', 'manha');
-('3º TEC', 'manha');
+('1º TEC', 'manha'),
+('2º TEC', 'manha'),
+('3º TEC', 'manha'),
 ('1º ADM-A', 'manha'),
 ('2º ADM-A', 'manha'),
 ('3º ADM-A', 'manha'),
@@ -101,9 +101,9 @@ INSERT INTO turmas (nome, periodo) VALUES
 ('1º ADM-B', 'tarde'),
 ('2º ADM-B', 'tarde'),
 ('3º ADM-B', 'tarde'),
-('1º SJ', 'tarde');
-('2º LOG-N', 'tarde');
-('1º LM', 'tarde');
+('1º SJ', 'tarde'),
+('2º LOG-N', 'tarde'),
+('1º LM', 'tarde'),
 ('2º LM', 'tarde');
 
 -- 5. Cadastro das modalidades

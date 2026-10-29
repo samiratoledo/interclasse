@@ -57,7 +57,6 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
             width: 60px;
             height: 60px;
             object-fit: contain;
-            border: 1px dashed #b8c9dc;
             border-radius: 8px;
             padding: 4px;
         }
@@ -142,7 +141,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
             <div class="header-top">
                 <div class="branding">
 
-                    <img class="logo" src="<?= $baseUrl ?>/public/assets/img/logo-etec-zl.png"
+                    <img class="logo" src="<?= $baseUrl ?>/public/assets/logo-etec-zl.png"
                         alt="Logo ETEC Zona Leste">
 
                     <div>

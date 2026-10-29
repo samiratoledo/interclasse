@@ -253,14 +253,14 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 </div>
 
 <?php if ($mensagem !== ''): ?>
-    <div class="notification is-success is-light">
+    <div class="notification is-success is-dark">
         <button class="delete" type="button" onclick="this.parentElement.remove()"></button>
         <?= escaparModalidade($mensagem) ?>
     </div>
 <?php endif; ?>
 
 <?php if ($erros): ?>
-    <div class="notification is-danger is-light">
+    <div class="notification is-danger is-dark">
         <strong>Confira os seguintes pontos:</strong>
         <ul class="mt-2">
             <?php foreach ($erros as $erro): ?>
@@ -284,10 +284,8 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             <div class="column is-6">
                 <label class="label" for="nome">Nome da modalidade *</label>
                 <div class="control">
-                    <input class="input" type="text" id="nome" name="nome"
-                           maxlength="100" required
-                           value="<?= escaparModalidade($valoresFormulario['nome'] ?? '') ?>"
-                           placeholder="Ex.: Futsal">
+                    <input class="input" type="text" id="nome" name="nome" maxlength="100" required
+                        value="<?= escaparModalidade($valoresFormulario['nome'] ?? '') ?>" placeholder="Ex.: Futsal">
                 </div>
             </div>
 
@@ -297,8 +295,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                     <div class="select is-fullwidth">
                         <select id="categoria" name="categoria" required>
                             <?php foreach ($categorias as $valor => $rotulo): ?>
-                                <option value="<?= escaparModalidade($valor) ?>"
-                                    <?= ($valoresFormulario['categoria'] ?? 'misto') === $valor ? 'selected' : '' ?>>
+                                <option value="<?= escaparModalidade($valor) ?>" <?= ($valoresFormulario['categoria'] ?? 'misto') === $valor ? 'selected' : '' ?>>
                                     <?= escaparModalidade($rotulo) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -310,37 +307,32 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             <div class="column is-3">
                 <label class="label" for="icone">Ícone (opcional)</label>
                 <div class="control">
-                    <input class="input" type="text" id="icone" name="icone"
-                           maxlength="100"
-                           value="<?= escaparModalidade($valoresFormulario['icone'] ?? '') ?>"
-                           placeholder="Ex.: ⚽">
+                    <input class="input" type="text" id="icone" name="icone" maxlength="100"
+                        value="<?= escaparModalidade($valoresFormulario['icone'] ?? '') ?>" placeholder="Ex.: ⚽">
                 </div>
             </div>
 
             <div class="column is-3">
                 <label class="label" for="minimo_atletas">Mínimo de atletas *</label>
                 <div class="control">
-                    <input class="input" type="number" id="minimo_atletas" name="minimo_atletas"
-                           min="1" max="65535" required
-                           value="<?= escaparModalidade($valoresFormulario['minimo_atletas'] ?? 1) ?>">
+                    <input class="input" type="number" id="minimo_atletas" name="minimo_atletas" min="1" max="65535"
+                        required value="<?= escaparModalidade($valoresFormulario['minimo_atletas'] ?? 1) ?>">
                 </div>
             </div>
 
             <div class="column is-3">
                 <label class="label" for="maximo_atletas">Máximo de atletas *</label>
                 <div class="control">
-                    <input class="input" type="number" id="maximo_atletas" name="maximo_atletas"
-                           min="1" max="65535" required
-                           value="<?= escaparModalidade($valoresFormulario['maximo_atletas'] ?? 30) ?>">
+                    <input class="input" type="number" id="maximo_atletas" name="maximo_atletas" min="1" max="65535"
+                        required value="<?= escaparModalidade($valoresFormulario['maximo_atletas'] ?? 30) ?>">
                 </div>
             </div>
 
             <div class="column is-6">
                 <label class="label" for="descricao">Descrição</label>
                 <div class="control">
-                    <textarea class="textarea" id="descricao" name="descricao"
-                              rows="2" maxlength="5000"
-                              placeholder="Informações adicionais sobre a modalidade"><?= escaparModalidade($valoresFormulario['descricao'] ?? '') ?></textarea>
+                    <textarea class="textarea" id="descricao" name="descricao" rows="2" maxlength="5000"
+                        placeholder="Informações adicionais sobre a modalidade"><?= escaparModalidade($valoresFormulario['descricao'] ?? '') ?></textarea>
                 </div>
             </div>
         </div>
@@ -351,7 +343,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </button>
 
             <?php if (!empty($valoresFormulario['id'])): ?>
-                <a href="modalidades.php" class="button is-light">Cancelar edição</a>
+                <a href="modalidades.php" class="button is-dark">Cancelar edição</a>
             <?php endif; ?>
         </div>
     </form>
@@ -413,9 +405,9 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
                             <td>
                                 <?php if ((int) $modalidade['ativa'] === 1): ?>
-                                    <span class="tag is-success is-light">Ativa</span>
+                                    <span class="tag is-success is-dark">Ativa</span>
                                 <?php else: ?>
-                                    <span class="tag is-light">Inativa</span>
+                                    <span class="tag is-dark">Inativa</span>
                                 <?php endif; ?>
                             </td>
 
@@ -425,15 +417,16 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                         <input type="hidden" name="token_csrf" value="<?= escaparModalidade($tokenCsrf) ?>">
                                         <input type="hidden" name="acao" value="editar">
                                         <input type="hidden" name="id" value="<?= (int) $modalidade['id'] ?>">
-                                        <button type="submit" class="button is-small is-link is-light">Editar</button>
+                                        <button type="submit" class="button is-small is-link is-dark">Editar</button>
                                     </form>
 
                                     <form method="POST" action="modalidades.php"
-                                          onsubmit="return confirm('Deseja realmente <?= (int) $modalidade['ativa'] === 1 ? 'desativar' : 'ativar' ?> esta modalidade?');">
+                                        onsubmit="return confirm('Deseja realmente <?= (int) $modalidade['ativa'] === 1 ? 'desativar' : 'ativar' ?> esta modalidade?');">
                                         <input type="hidden" name="token_csrf" value="<?= escaparModalidade($tokenCsrf) ?>">
                                         <input type="hidden" name="acao" value="alternar_status">
                                         <input type="hidden" name="id" value="<?= (int) $modalidade['id'] ?>">
-                                        <button type="submit" class="button is-small <?= (int) $modalidade['ativa'] === 1 ? 'is-danger is-light' : 'is-success is-light' ?>">
+                                        <button type="submit"
+                                            class="button is-small <?= (int) $modalidade['ativa'] === 1 ? 'is-danger is-dark' : 'is-success is-dark' ?>">
                                             <?= (int) $modalidade['ativa'] === 1 ? 'Desativar' : 'Ativar' ?>
                                         </button>
                                     </form>

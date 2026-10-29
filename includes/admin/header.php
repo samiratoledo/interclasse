@@ -46,9 +46,9 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
         .site-footer {
             width: 100%;
             margin-top: auto;
-            background: #e8eef5;
+            background: #0b2948;
             border-top: 1px solid #d6e0eb;
-            color: #53657a;
+            color: #d6e0eb;
             padding: 18px;
             text-align: center;
             font-size: 12px;
@@ -85,7 +85,6 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             width: 42px;
             height: 42px;
             object-fit: contain;
-            border: 1px dashed #b8c9dc;
             border-radius: 6px;
             padding: 3px;
         }
@@ -144,6 +143,10 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             padding: 0 20px;
         }
 
+        .box {
+            background: #0b2948;
+        }
+
         @media (max-width: 600px) {
             .header-container {
                 padding: 8px 12px;
@@ -196,7 +199,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
         <div class="header-container">
             <div class="header-top">
                 <div class="branding">
-                    <img class="logo" src="<?= $baseUrl ?>/public/assets/img/logo-etec-zl.png"
+                    <img class="logo" src="<?= $baseUrl ?>/public/assets/logo-etec-zl.png"
                         alt="Logo ETEC Zona Leste">
 
                     <div>
@@ -219,6 +222,8 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 <a href="<?= $baseUrl ?>/public/admin/modalidades.php">Modalidades</a>
                 <a href="<?= $baseUrl ?>/public/admin/inscricoes.php">Inscrições</a>
                 <a href="<?= $baseUrl ?>/public/admin/aprovar-atletas.php">Aprovar atletas</a>
+                <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
+                <a href="<?= $baseUrl ?>/public/admin/partidas.php">Partidas</a>
                 <a class="logout" href="<?= $baseUrl ?>/public/logout.php">Sair</a>
             </nav>
         </div>

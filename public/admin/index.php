@@ -13,30 +13,34 @@ $estatisticas = [
     'turmas' => 0,
     'modalidades' => 0,
     'partidas' => 0,
-    'usuarios' => 0,
+    'usuarios' => 0
 ];
 
 $partidasRecentes = [];
 $erro = '';
 
+// Carrega cada estatística de forma independente.
+$consultas = [
+    'turmas' => 'SELECT COUNT(*) FROM turmas WHERE ativa = 1',
+    'modalidades' => 'SELECT COUNT(*) FROM modalidades WHERE ativa = 1',
+    'partidas' => "SELECT COUNT(*) FROM partidas
+                   WHERE status IN ('agendada', 'em_andamento', 'pausada')",
+    'usuarios' => 'SELECT COUNT(*) FROM usuarios WHERE ativo = 1'
+];
+
+foreach ($consultas as $chave => $sql) {
+    try {
+        $estatisticas[$chave] = (int) $pdo
+            ->query($sql)
+            ->fetchColumn();
+    } catch (PDOException $e) {
+        error_log("Erro na estatística {$chave}: " . $e->getMessage());
+        $erro = 'Não foi possível carregar algumas estatísticas.';
+    }
+}
+
+// Carrega as partidas recentes separadamente.
 try {
-    $estatisticas['turmas'] = (int) $pdo
-        ->query('SELECT COUNT(*) FROM turmas WHERE ativa = 1')
-        ->fetchColumn();
-
-    $estatisticas['modalidades'] = (int) $pdo
-        ->query('SELECT COUNT(*) FROM modalidades WHERE ativa = 1')
-        ->fetchColumn();
-
-    $estatisticas['partidas'] = (int) $pdo
-        ->query("SELECT COUNT(*) FROM partidas
-                 WHERE status IN ('agendada', 'em_andamento', 'pausada')")
-        ->fetchColumn();
-
-    $estatisticas['usuarios'] = (int) $pdo
-        ->query('SELECT COUNT(*) FROM usuarios WHERE ativo = 1')
-        ->fetchColumn();
-
     $sql = "
         SELECT
             p.id,
@@ -44,11 +48,11 @@ try {
             p.status,
             p.placar_casa,
             p.placar_visitante,
-            mc.nome AS modalidade,
+            m.nome AS modalidade,
             tc.nome AS turma_casa,
             tv.nome AS turma_visitante
         FROM partidas p
-        INNER JOIN modalidades mc ON mc.id = p.modalidade_id
+        INNER JOIN modalidades m ON m.id = p.modalidade_id
         INNER JOIN turmas tc ON tc.id = p.turma_casa_id
         INNER JOIN turmas tv ON tv.id = p.turma_visitante_id
         ORDER BY
@@ -66,8 +70,8 @@ try {
     $partidasRecentes = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    error_log($e->getMessage());
-    $erro = 'Não foi possível carregar todos os dados do painel.';
+    error_log('Erro ao carregar partidas recentes: ' . $e->getMessage());
+    $erro = 'Não foi possível carregar as partidas recentes.';
 }
 
 function escapar(mixed $valor): string
