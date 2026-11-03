@@ -1014,3 +1014,105 @@ ORDER BY id;
 
 SELECT * FROM regulamentos
 ORDER BY ordem;
+
+-- Tabela principal das inscrições
+CREATE TABLE IF NOT EXISTS inscricoes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    turma_id INT UNSIGNED NOT NULL,
+    modalidade_id INT UNSIGNED NOT NULL,
+
+    status ENUM(
+        'pendente',
+        'aprovada',
+        'rejeitada',
+        'cancelada'
+    ) NOT NULL DEFAULT 'pendente',
+
+    observacao TEXT NULL,
+    observacao_admin TEXT NULL,
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_inscricoes_turma (turma_id),
+    INDEX idx_inscricoes_modalidade (modalidade_id),
+    INDEX idx_inscricoes_status (status),
+
+    CONSTRAINT fk_inscricoes_turma
+        FOREIGN KEY (turma_id)
+        REFERENCES turmas(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_inscricoes_modalidade
+        FOREIGN KEY (modalidade_id)
+        REFERENCES modalidades(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+USE interclasse_etec;
+
+-- 1. Criar primeiro a tabela principal
+CREATE TABLE IF NOT EXISTS inscricoes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    turma_id INT UNSIGNED NOT NULL,
+    modalidade_id INT UNSIGNED NOT NULL,
+
+    status ENUM(
+        'pendente',
+        'aprovada',
+        'rejeitada',
+        'cancelada'
+    ) NOT NULL DEFAULT 'pendente',
+
+    observacao TEXT NULL,
+    observacao_admin TEXT NULL,
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_inscricoes_turma (turma_id),
+    INDEX idx_inscricoes_modalidade (modalidade_id),
+    INDEX idx_inscricoes_status (status),
+
+    CONSTRAINT fk_inscricoes_turma
+        FOREIGN KEY (turma_id)
+        REFERENCES turmas(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_inscricoes_modalidade
+        FOREIGN KEY (modalidade_id)
+        REFERENCES modalidades(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+
+-- 2. Depois criar o relacionamento com os atletas
+CREATE TABLE IF NOT EXISTS inscricao_atletas (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    inscricao_id INT UNSIGNED NOT NULL,
+    atleta_id INT UNSIGNED NOT NULL,
+
+    UNIQUE KEY uq_inscricao_atleta (inscricao_id, atleta_id),
+    INDEX idx_inscricao_atletas_atleta (atleta_id),
+
+    CONSTRAINT fk_inscricao_atletas_inscricao
+        FOREIGN KEY (inscricao_id)
+        REFERENCES inscricoes(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_inscricao_atletas_atleta
+        FOREIGN KEY (atleta_id)
+        REFERENCES atletas(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
