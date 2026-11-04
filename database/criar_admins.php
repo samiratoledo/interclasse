@@ -71,3 +71,5 @@ try {
 } finally {
     unset($senha, $confirmacao);
 }
+
+// php.exe database/criar_admins.php
