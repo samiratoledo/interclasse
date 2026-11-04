@@ -78,7 +78,7 @@ CREATE TABLE modalidades (
 CREATE TABLE usuarios (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
-    usuario_login VARCHAR(50) NOT NULL,
+    usuario_login VARCHAR(50) NULL,
     senha_hash VARCHAR(255) NOT NULL,
 
     perfil ENUM(
@@ -111,7 +111,9 @@ CREATE TABLE usuarios (
 CREATE TABLE atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
+    sexo ENUM('masculino', 'feminino') NOT NULL,
     numero_camisa TINYINT UNSIGNED NULL,
+    observacao_aprovacao TEXT NULL,
     turma_id INT UNSIGNED NOT NULL,
     cadastrado_por INT UNSIGNED NOT NULL,
 
@@ -997,26 +999,11 @@ A pontuação poderá ser ajustada pela comissão antes do início das competiç
 • As decisões deverão considerar a segurança, a igualdade de condições e o caráter educativo do evento.
 • Todos os participantes deverão respeitar as orientações dos professores, árbitros e responsáveis pela organização.', 21);
 
-
 -- =====================================================
--- 12. CONFERÊNCIA DO BANCO
+-- 12. INSCRIÇÕES
 -- =====================================================
 
-SHOW TABLES;
-
-SELECT * FROM usuarios;
-
-SELECT * FROM turmas
-ORDER BY periodo, id;
-
-SELECT * FROM modalidades
-ORDER BY id;
-
-SELECT * FROM regulamentos
-ORDER BY ordem;
-
--- Tabela principal das inscrições
-CREATE TABLE IF NOT EXISTS inscricoes (
+CREATE TABLE inscricoes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
     turma_id INT UNSIGNED NOT NULL,
@@ -1053,48 +1040,12 @@ CREATE TABLE IF NOT EXISTS inscricoes (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-USE interclasse_etec;
 
--- 1. Criar primeiro a tabela principal
-CREATE TABLE IF NOT EXISTS inscricoes (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    turma_id INT UNSIGNED NOT NULL,
-    modalidade_id INT UNSIGNED NOT NULL,
+-- =====================================================
+-- 13. ATLETAS INSCRITOS EM CADA MODALIDADE
+-- =====================================================
 
-    status ENUM(
-        'pendente',
-        'aprovada',
-        'rejeitada',
-        'cancelada'
-    ) NOT NULL DEFAULT 'pendente',
-
-    observacao TEXT NULL,
-    observacao_admin TEXT NULL,
-
-    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_inscricoes_turma (turma_id),
-    INDEX idx_inscricoes_modalidade (modalidade_id),
-    INDEX idx_inscricoes_status (status),
-
-    CONSTRAINT fk_inscricoes_turma
-        FOREIGN KEY (turma_id)
-        REFERENCES turmas(id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT fk_inscricoes_modalidade
-        FOREIGN KEY (modalidade_id)
-        REFERENCES modalidades(id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci;
-
-
--- 2. Depois criar o relacionamento com os atletas
-CREATE TABLE IF NOT EXISTS inscricao_atletas (
+CREATE TABLE inscricao_atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     inscricao_id INT UNSIGNED NOT NULL,
     atleta_id INT UNSIGNED NOT NULL,
@@ -1116,3 +1067,27 @@ CREATE TABLE IF NOT EXISTS inscricao_atletas (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================
+-- 14. CONFERÊNCIA DO BANCO
+-- =====================================================
+
+SHOW TABLES;
+
+SELECT * FROM usuarios;
+
+SELECT * FROM turmas
+ORDER BY periodo, id;
+
+SELECT * FROM modalidades
+ORDER BY id;
+
+SELECT * FROM regulamentos
+ORDER BY ordem;
+
+SELECT * FROM inscricoes
+ORDER BY criado_em DESC;
+
+SELECT * FROM inscricao_atletas
+ORDER BY inscricao_id, atleta_id;

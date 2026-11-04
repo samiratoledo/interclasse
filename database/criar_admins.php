@@ -15,12 +15,18 @@ function perguntar(string $mensagem): string
     return trim((string) fgets(STDIN));
 }
 
-echo "=== CADASTRO DO ADMINISTRADOR ===\n\n";
+echo "================================\n";
+echo "     CRIAR ADMINISTRADOR\n";
+echo "================================\n\n";
 
-$nome = perguntar('Escolha seu nome de usuário: ');
+$nome = perguntar('Nome completo: ');
+if ($nome === '') {
+    exit("O nome não pode ficar vazio.\n");
+}
 
-if (!preg_match('/^[a-zA-Z0-9._-]{3,50}$/', $nome)) {
-    exit("Use de 3 a 50 caracteres: letras, números, ponto, hífen ou sublinhado.\n");
+$login = perguntar('Nome de usuário para login: ');
+if (!preg_match('/^[a-zA-Z0-9._-]{3,50}$/', $login)) {
+    exit("Use de 3 a 50 caracteres no usuário: letras, números, ponto, hífen ou sublinhado.\n");
 }
 
 $senha = perguntar('Crie sua senha (mínimo de 10 caracteres): ');
@@ -29,7 +35,6 @@ $confirmacao = perguntar('Confirme sua senha: ');
 if (strlen($senha) < 10) {
     exit("A senha precisa ter pelo menos 10 caracteres.\n");
 }
-
 if (!hash_equals($senha, $confirmacao)) {
     exit("As senhas não coincidem.\n");
 }
@@ -37,42 +42,32 @@ if (!hash_equals($senha, $confirmacao)) {
 try {
     $pdo->beginTransaction();
 
-    $total = (int) $pdo
-        ->query('SELECT COUNT(*) FROM usuarios')
-        ->fetchColumn();
-
+    $total = (int) $pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
     if ($total > 0) {
         $pdo->rollBack();
         exit("Já existem usuários cadastrados. Cadastro cancelado.\n");
     }
 
-    $sql = 'INSERT INTO usuarios
-            (nome, senha_hash, perfil, turma_id, ativo)
-            VALUES (:nome, :senha_hash, :perfil, NULL, 1)';
-
+    $sql = 'INSERT INTO usuarios (nome, usuario_login, senha_hash, perfil, turma_id, ativo)
+            VALUES (:nome, :usuario_login, :senha_hash, :perfil, NULL, 1)';
     $stmt = $pdo->prepare($sql);
-
     $stmt->execute([
         'nome' => $nome,
+        'usuario_login' => $login,
         'senha_hash' => password_hash($senha, PASSWORD_DEFAULT),
         'perfil' => 'admin',
     ]);
 
     $pdo->commit();
-
-    echo "\nConta de administrador criada com sucesso!\n";
-    echo "Guarde suas credenciais em local seguro.\n";
-    echo "Apague este arquivo depois de utilizá-lo.\n";
-
+    echo "\nAdministrador criado com sucesso!\n";
+    echo "Login: $login\n";
+    echo "Agora você pode entrar pelo sistema.\n";
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-
     error_log($e->getMessage());
-    exit("Não foi possível criar a conta. Verifique os registros do PHP.\n");
+    exit("Não foi possível criar o administrador. Confira se o banco e as tabelas foram criados corretamente.\n");
 } finally {
     unset($senha, $confirmacao);
 }
-
-// php.exe database/criar_admins.php
