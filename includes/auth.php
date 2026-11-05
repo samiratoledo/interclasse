@@ -42,7 +42,7 @@ function usuarioAtual(): ?array
 function exigirLogin(): void
 {
     if (!usuarioAutenticado()) {
-        header('Location: /interclasse-etec/public/login.php');
+        header('Location: ../login.php');
         exit;
     }
 }
