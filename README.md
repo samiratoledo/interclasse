@@ -503,4 +503,4 @@ Este documento é a referência do escopo. Ao terminar cada etapa:
 4. Atualizar este documento quando o escopo mudar.
 5. Não marcar uma funcionalidade como concluída antes de testá-la.
 
-**Próximo passo imediato:** ajustar front-end dos representantes.
+**Próximo passo imediato:** ajustar front-end dos representantes. arrumar mensagem de erro que aparece quando tenta negativar o gol

@@ -76,19 +76,13 @@ require_once __DIR__ . '/../../includes/representante/header.php';
                 <div class="column is-narrow has-text-centered">
                     <?php if (!empty($turma['imagem'])): ?>
                         <figure class="image is-128x128 is-inline-block">
-                            <img
-                                src="<?= escaparPainelRepresentante(
-                                    '/interclasse-etec/' . ltrim((string) $turma['imagem'], '/')
-                                ) ?>"
+                            <img src="../<?= escaparPainelRepresentante($turma['imagem']) ?>"
                                 alt="Brasão da turma <?= escaparPainelRepresentante($turma['nome']) ?>"
-                                style="width:128px;height:128px;object-fit:contain;"
-                            >
+                                style="width:128px;height:128px;object-fit:contain;">
                         </figure>
                     <?php else: ?>
-                        <div
-                            class="has-background-light is-flex is-align-items-center is-justify-content-center"
-                            style="width:128px;height:128px;border-radius:8px;"
-                        >
+                        <div class="has-background-light is-flex is-align-items-center is-justify-content-center"
+                            style="width:128px;height:128px;border-radius:8px;">
                             <span class="icon is-large">
                                 <i class="fas fa-shield-alt fa-3x"></i>
                             </span>

@@ -327,196 +327,539 @@ try {
     error_log($e->getMessage());
     $erro = 'Não foi possível concluir a inscrição. Confira os dados e tente novamente.';
 }
+
+require_once __DIR__ . '/../../includes/representante/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscrições | Interclasse ETEC</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="../assets/style.css">
-</head>
+<?php
+require_once __DIR__ . '/../../includes/representante/header.php';
+?>
 
-<body>
-<nav class="navbar is-dark" role="navigation" aria-label="Navegação principal">
-    <div class="navbar-brand">
-        <a class="navbar-item has-text-weight-bold" href="index.php">Interclasse ETEC</a>
-    </div>
+<style>
+    .inscricoes-page {
+        padding-bottom: 25px;
+    }
 
-    <div class="navbar-menu is-active">
-        <div class="navbar-start">
-            <a class="navbar-item" href="index.php">Painel</a>
-            <a class="navbar-item" href="atletas.php">Meus atletas</a>
-            <a class="navbar-item is-active" href="inscricoes.php">Inscrições</a>
+    .inscricoes-intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .inscricoes-intro .title {
+        margin-bottom: 6px;
+    }
+
+    .inscricoes-card {
+        padding: 25px;
+        margin-bottom: 22px;
+    }
+
+    .inscricoes-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .inscricoes-description {
+        color: #746b53;
+        font-size: 13px;
+        margin-bottom: 22px;
+    }
+
+    .inscricoes-form {
+        max-width: 850px;
+    }
+
+    .inscricoes-form .label {
+        color: #40391f;
+        font-size: 13px;
+    }
+
+    .inscricoes-form .input,
+    .inscricoes-form .select select,
+    .inscricoes-form .textarea {
+        border-radius: 8px;
+    }
+
+    .inscricoes-form .input:focus,
+    .inscricoes-form .select select:focus,
+    .inscricoes-form .textarea:focus {
+        border-color: #e3ad12;
+        box-shadow: 0 0 0 0.125em #e3ad1230;
+    }
+
+    .inscricoes-atletas {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .inscricoes-atleta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid #eee5ce;
+        border-radius: 8px;
+        background: #fffefa;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+        font-size: 13px;
+    }
+
+    .inscricoes-atleta:hover {
+        background: #fff9e7;
+        border-color: #e3c45e;
+    }
+
+    .inscricoes-atleta input {
+        accent-color: #c99400;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .inscricoes-atleta span {
+        line-height: 1.5;
+    }
+
+    .inscricoes-form .button.is-primary {
+        background: #e3ad12;
+        border-color: #e3ad12;
+        color: #302b1c;
+        font-weight: 700;
+    }
+
+    .inscricoes-form .button.is-primary:hover {
+        background: #c99400;
+        border-color: #c99400;
+    }
+
+    .inscricoes-limites {
+        padding: 12px 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        background: #fff4cc;
+        color: #665018;
+        font-size: 13px;
+    }
+
+    .inscricoes-table {
+        overflow-x: auto;
+    }
+
+    .inscricoes-table .table {
+        min-width: 1000px;
+    }
+
+    .inscricoes-table .table th {
+        color: #655629;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .inscricoes-table .table td {
+        vertical-align: middle;
+        font-size: 13px;
+        max-width: 280px;
+        overflow-wrap: anywhere;
+    }
+
+    .inscricoes-table .table tbody tr:hover {
+        background: #fffaf0;
+    }
+
+    .inscricoes-empty {
+        text-align: center;
+        padding: 35px 15px;
+        color: #746b53;
+    }
+
+    .inscricoes-count {
+        background: #fff4cc;
+        color: #665018;
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .inscricoes-page .notification {
+        border-radius: 8px;
+        font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+        .inscricoes-card {
+            padding: 17px;
+        }
+
+        .inscricoes-intro {
+            align-items: flex-start;
+        }
+
+        .inscricoes-intro .button {
+            width: 100%;
+        }
+
+        .inscricoes-atletas {
+            grid-template-columns: 1fr;
+        }
+
+        .inscricoes-form .button {
+            width: 100%;
+        }
+    }
+</style>
+
+<section class="inscricoes-page">
+
+    <!-- CABEÇALHO DA PÁGINA -->
+
+    <div class="inscricoes-intro">
+
+        <div>
+            <h1 class="title is-3">Inscrições nas modalidades</h1>
+
+            <p class="subtitle is-6">
+                Inscreva sua turma nas modalidades e acompanhe a análise da administração.
+            </p>
+
+            <span class="inscricoes-count">
+                <?= count($inscricoes) ?> inscrição(ões) realizada(s)
+            </span>
         </div>
 
-        <div class="navbar-end">
-            <div class="navbar-item">
-                <form action="../logout.php" method="POST">
-                    <input type="hidden" name="token_csrf" value="<?= escaparInscricao(gerarTokenCsrf()) ?>">
-                    <button class="button is-light is-small" type="submit">Sair</button>
-                </form>
+        <a class="button is-dark" href="index.php">
+            <span>Voltar ao painel</span>
+        </a>
+
+    </div>
+
+    <!-- MENSAGENS -->
+
+    <?php if ($erro !== ''): ?>
+        <div class="notification is-danger is-light">
+            <?= escaparInscricao($erro) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($sucesso !== ''): ?>
+        <div class="notification is-success is-light">
+            <?= escaparInscricao($sucesso) ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- NOVA INSCRIÇÃO -->
+
+    <div class="box inscricoes-card">
+
+        <div class="inscricoes-card-title">
+            <h2 class="title is-4 mb-0">
+                Nova inscrição
+            </h2>
+        </div>
+
+        <p class="inscricoes-description">
+            Selecione uma modalidade e os atletas aprovados que representarão sua turma.
+        </p>
+
+        <?php if ($modalidades === []): ?>
+
+            <div class="inscricoes-empty">
+                <h3 class="title is-5">Nenhuma modalidade disponível</h3>
+                <p>Não há modalidades ativas no momento. Consulte a administração.</p>
             </div>
-        </div>
-    </div>
-</nav>
 
-<section class="section">
-    <div class="container">
-        <h1 class="title">Inscrições nas modalidades</h1>
-        <p class="subtitle">Selecione os atletas aprovados e confira os limites de cada modalidade.</p>
+        <?php elseif ($atletas === []): ?>
 
-        <?php if ($erro !== ''): ?>
-            <div class="notification is-danger is-light"><?= escaparInscricao($erro) ?></div>
-        <?php endif; ?>
+            <div class="inscricoes-empty">
+                <h3 class="title is-5">Nenhum atleta aprovado</h3>
+                <p>Sua turma ainda não possui atletas aprovados. Aguarde a aprovação dos cadastros.</p>
+            </div>
 
-        <?php if ($sucesso !== ''): ?>
-            <div class="notification is-success is-light"><?= escaparInscricao($sucesso) ?></div>
-        <?php endif; ?>
+        <?php else: ?>
 
-        <div class="box">
-            <h2 class="title is-4">Nova inscrição</h2>
+            <form
+                method="POST"
+                action="inscricoes.php"
+                id="form-inscricao"
+                class="inscricoes-form"
+            >
 
-            <?php if ($modalidades === []): ?>
-                <div class="notification is-info is-light">Não há modalidades ativas no momento. Consulte a administração.</div>
-            <?php elseif ($atletas === []): ?>
-                <div class="notification is-info is-light">Sua turma ainda não possui atletas aprovados. Aguarde a aprovação.</div>
-            <?php else: ?>
-                <form method="POST" action="inscricoes.php" id="form-inscricao">
-                    <input type="hidden" name="token_csrf" value="<?= escaparInscricao(gerarTokenCsrf()) ?>">
-                    <input type="hidden" name="acao" value="inscrever">
+                <input
+                    type="hidden"
+                    name="token_csrf"
+                    value="<?= escaparInscricao(gerarTokenCsrf()) ?>"
+                >
 
-                    <div class="field">
-                        <label class="label" for="modalidade_id">Modalidade</label>
-                        <div class="control">
-                            <div class="select is-fullwidth">
-                                <select id="modalidade_id" name="modalidade_id" required>
-                                    <option value="">Selecione uma modalidade</option>
-                                    <?php foreach ($modalidades as $modalidade): ?>
-                                        <option
-                                            value="<?= (int) $modalidade['id'] ?>"
-                                            data-minimo="<?= (int) $modalidade['minimo_atletas'] ?>"
-                                            data-maximo="<?= (int) $modalidade['maximo_atletas'] ?>"
-                                            data-categoria="<?= escaparInscricao($modalidade['categoria']) ?>">
-                                            <?= escaparInscricao($modalidade['nome']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                <input type="hidden" name="acao" value="inscrever">
+
+                <div class="field">
+
+                    <label class="label" for="modalidade_id">
+                        Modalidade *
+                    </label>
+
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="modalidade_id" name="modalidade_id" required>
+
+                                <option value="">Selecione uma modalidade</option>
+
+                                <?php foreach ($modalidades as $modalidade): ?>
+
+                                    <option
+                                        value="<?= (int) $modalidade['id'] ?>"
+                                        data-minimo="<?= (int) $modalidade['minimo_atletas'] ?>"
+                                        data-maximo="<?= (int) $modalidade['maximo_atletas'] ?>"
+                                        data-categoria="<?= escaparInscricao($modalidade['categoria']) ?>"
+                                    >
+                                        <?= escaparInscricao($modalidade['nome']) ?>
+                                    </option>
+
+                                <?php endforeach; ?>
+
+                            </select>
                         </div>
-                        <p class="help" id="limites-modalidade">Selecione uma modalidade para consultar os limites de atletas.</p>
                     </div>
 
-                    <div id="aviso-quantidade" class="notification is-info is-light" hidden></div>
+                    <p class="help" id="limites-modalidade">
+                        Selecione uma modalidade para consultar os limites de atletas.
+                    </p>
 
-                    <div class="field">
-                        <label class="label">Selecione os atletas</label>
+                </div>
+
+                <div id="aviso-quantidade" class="inscricoes-limites" hidden></div>
+
+                <div class="field mt-5">
+
+                    <label class="label">
+                        Atletas disponíveis *
+                    </label>
+
+                    <div class="inscricoes-atletas">
 
                         <?php foreach ($atletas as $atleta): ?>
-                            <label class="checkbox is-block mb-3">
+
+                            <label class="inscricoes-atleta">
+
                                 <input
                                     type="checkbox"
                                     name="atletas[]"
                                     value="<?= (int) $atleta['id'] ?>"
-                                    data-sexo="<?= escaparInscricao($atleta['sexo'] ?? '') ?>">
-                                <?= escaparInscricao($atleta['nome']) ?>
-                                <?php if ($atleta['numero_camisa'] !== null): ?>
-                                    <span class="has-text-grey">— Camisa <?= (int) $atleta['numero_camisa'] ?></span>
-                                <?php endif; ?>
-                                <?php if (!empty($atleta['sexo'])): ?>
-                                    <span class="has-text-grey">— <?= escaparInscricao(ucfirst($atleta['sexo'])) ?></span>
-                                <?php endif; ?>
+                                    data-sexo="<?= escaparInscricao($atleta['sexo'] ?? '') ?>"
+                                >
+
+                                <span>
+                                    <strong>
+                                        <?= escaparInscricao($atleta['nome']) ?>
+                                    </strong>
+
+                                    <br>
+
+                                    <small class="has-text-grey">
+
+                                        <?php if ($atleta['numero_camisa'] !== null): ?>
+                                            Camisa <?= (int) $atleta['numero_camisa'] ?>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($atleta['sexo'])): ?>
+                                            <?= $atleta['numero_camisa'] !== null ? ' | ' : '' ?>
+                                            <?= escaparInscricao(ucfirst($atleta['sexo'])) ?>
+                                        <?php endif; ?>
+
+                                    </small>
+                                </span>
+
                             </label>
+
                         <?php endforeach; ?>
 
-                        <p class="help">Somente atletas aprovados da sua turma aparecem nesta lista.</p>
                     </div>
 
-                    <div class="field">
-                        <label class="label" for="observacao">Observações sobre a equipe</label>
-                        <div class="control">
-                            <textarea class="textarea" id="observacao" name="observacao" maxlength="10000" placeholder="Informe detalhes importantes sobre esta inscrição..."></textarea>
-                        </div>
-                        <p class="help">A administração poderá consultar esta observação durante a análise.</p>
-                    </div>
+                    <p class="help mt-2">
+                        Somente atletas aprovados da sua turma aparecem nesta lista.
+                    </p>
 
-                    <button class="button is-primary" type="submit">Enviar inscrição para aprovação</button>
-                </form>
-            <?php endif; ?>
-        </div>
-
-        <div class="box">
-            <h2 class="title is-4">Inscrições da turma</h2>
-
-            <?php if ($inscricoes === []): ?>
-                <div class="notification is-info is-light">Sua turma ainda não realizou inscrições.</div>
-            <?php else: ?>
-                <div class="table-container">
-                    <table class="table is-fullwidth is-striped is-hoverable">
-                        <thead>
-                            <tr>
-                                <th>Modalidade</th>
-                                <th>Atletas inscritos</th>
-                                <th>Observação do representante</th>
-                                <th>Resposta da administração</th>
-                                <th>Status</th>
-                                <th>Data da inscrição</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($inscricoes as $inscricao): ?>
-                                <tr>
-                                    <td><?= escaparInscricao($inscricao['modalidade_nome']) ?></td>
-                                    <td><?= escaparInscricao($inscricao['nomes_atletas'] ?: 'Nenhum atleta') ?></td>
-                                    <td>
-                                        <?php if (!empty($inscricao['observacao'])): ?>
-                                            <?= nl2br(escaparInscricao($inscricao['observacao'])) ?>
-                                        <?php else: ?>
-                                            <span class="has-text-grey">Nenhuma</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if (!empty($inscricao['observacao_admin'])): ?>
-                                            <?= nl2br(escaparInscricao($inscricao['observacao_admin'])) ?>
-                                        <?php else: ?>
-                                            <span class="has-text-grey">Nenhuma resposta da administração.</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php
-                                        $status = $inscricao['status'];
-                                        $classesStatus = [
-                                            'aprovada' => 'is-success',
-                                            'rejeitada' => 'is-danger',
-                                            'cancelada' => 'is-dark',
-                                            'pendente' => 'is-warning'
-                                        ];
-                                        $rotulosStatus = [
-                                            'aprovada' => 'Aprovada',
-                                            'rejeitada' => 'Rejeitada',
-                                            'cancelada' => 'Cancelada',
-                                            'pendente' => 'Pendente'
-                                        ];
-                                        ?>
-                                        <span class="tag <?= escaparInscricao($classesStatus[$status] ?? 'is-light') ?>">
-                                            <?= escaparInscricao($rotulosStatus[$status] ?? $status) ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?= !empty($inscricao['criado_em'])
-                                            ? escaparInscricao(date('d/m/Y H:i', strtotime($inscricao['criado_em'])))
-                                            : '—' ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
                 </div>
-            <?php endif; ?>
-        </div>
+
+                <div class="field mt-5">
+
+                    <label class="label" for="observacao">
+                        Observações sobre a equipe
+                    </label>
+
+                    <div class="control">
+                        <textarea
+                            class="textarea"
+                            id="observacao"
+                            name="observacao"
+                            maxlength="10000"
+                            rows="3"
+                            placeholder="Informe detalhes importantes sobre esta inscrição..."
+                        ></textarea>
+                    </div>
+
+                    <p class="help">
+                        A administração poderá consultar esta observação durante a análise.
+                    </p>
+
+                </div>
+
+                <div class="field is-grouped is-grouped-multiline mt-5">
+
+                    <div class="control">
+                        <button class="button is-primary" type="submit">
+                            Enviar inscrição para aprovação
+                        </button>
+                    </div>
+
+                </div>
+
+            </form>
+
+        <?php endif; ?>
+
     </div>
+
+    <!-- INSCRIÇÕES REALIZADAS -->
+
+    <div class="box inscricoes-card">
+
+        <div class="inscricoes-intro">
+
+            <div>
+                <h2 class="title is-4 mb-2">
+                    Inscrições da turma
+                </h2>
+
+                <p class="inscricoes-description mb-0">
+                    Consulte os atletas inscritos e acompanhe as respostas da administração.
+                </p>
+            </div>
+
+            <span class="inscricoes-count">
+                <?= count($inscricoes) ?> registro(s)
+            </span>
+
+        </div>
+
+        <?php if ($inscricoes === []): ?>
+
+            <div class="inscricoes-empty">
+
+                <h3 class="title is-5">
+                    Nenhuma inscrição realizada
+                </h3>
+
+                <p>
+                    Utilize o formulário acima para inscrever sua turma em uma modalidade.
+                </p>
+
+            </div>
+
+        <?php else: ?>
+
+            <div class="inscricoes-table">
+
+                <table class="table is-fullwidth is-hoverable">
+
+                    <thead>
+                        <tr>
+                            <th>Modalidade</th>
+                            <th>Atletas inscritos</th>
+                            <th>Observação do representante</th>
+                            <th>Resposta da administração</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <?php foreach ($inscricoes as $inscricao): ?>
+
+                            <?php
+                            $status = $inscricao['status'];
+
+                            $classesStatus = [
+                                'aprovada' => 'is-success is-dark',
+                                'rejeitada' => 'is-danger is-dark',
+                                'cancelada' => 'is-dark',
+                                'pendente' => 'is-warning is-dark'
+                            ];
+
+                            $rotulosStatus = [
+                                'aprovada' => 'Aprovada',
+                                'rejeitada' => 'Rejeitada',
+                                'cancelada' => 'Cancelada',
+                                'pendente' => 'Pendente'
+                            ];
+                            ?>
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        <?= escaparInscricao($inscricao['modalidade_nome']) ?>
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <?= escaparInscricao($inscricao['nomes_atletas'] ?: 'Nenhum atleta') ?>
+                                </td>
+
+                                <td>
+                                    <?php if (!empty($inscricao['observacao'])): ?>
+                                        <?= nl2br(escaparInscricao($inscricao['observacao'])) ?>
+                                    <?php else: ?>
+                                        <span class="has-text-grey">Nenhuma</span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <?php if (!empty($inscricao['observacao_admin'])): ?>
+                                        <?= nl2br(escaparInscricao($inscricao['observacao_admin'])) ?>
+                                    <?php else: ?>
+                                        <span class="has-text-grey">
+                                            Nenhuma resposta da administração.
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <span class="tag <?= escaparInscricao($classesStatus[$status] ?? 'is-light') ?>">
+                                        <?= escaparInscricao($rotulosStatus[$status] ?? $status) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <?= !empty($inscricao['criado_em'])
+                                        ? escaparInscricao(date('d/m/Y H:i', strtotime($inscricao['criado_em'])))
+                                        : '—' ?>
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </div>
+
 </section>
 
 <script>
@@ -532,43 +875,66 @@ function validarSelecao() {
     const minimo = Number(opcao?.dataset.minimo || 0);
     const maximo = Number(opcao?.dataset.maximo || 0);
     const categoria = opcao?.dataset.categoria || '';
-    const selecionados = [...formulario.querySelectorAll('input[name="atletas[]"]:checked')];
 
-    formulario.querySelectorAll('input[name="atletas[]"]').forEach((checkbox) => {
+    const todosCheckboxes = [
+        ...formulario.querySelectorAll('input[name="atletas[]"]')
+    ];
+
+    const selecionados = todosCheckboxes.filter(
+        checkbox => checkbox.checked
+    );
+
+    todosCheckboxes.forEach(checkbox => {
         const sexo = checkbox.dataset.sexo || '';
-        const incompatível = categoria !== 'misto' && sexo !== categoria;
-        checkbox.disabled = incompatível && !checkbox.checked;
-        checkbox.closest('label').style.opacity = incompatível ? '0.5' : '1';
+        const incompatibilidade = categoria !== 'misto' && sexo !== categoria;
+
+        checkbox.disabled = incompatibilidade && !checkbox.checked;
+
+        checkbox.closest('label').style.opacity =
+            incompatibilidade ? '0.5' : '1';
     });
 
     if (!opcao || !opcao.value) {
-        avisoLimites.textContent = 'Selecione uma modalidade para consultar os limites de atletas.';
+        avisoLimites.textContent =
+            'Selecione uma modalidade para consultar os limites de atletas.';
+
         avisoQuantidade.hidden = true;
         return true;
     }
 
-    avisoLimites.textContent = `Mínimo: ${minimo} atleta(s) • Máximo: ${maximo} atleta(s).`;
+    avisoLimites.textContent =
+        `Mínimo: ${minimo} atleta(s) | Máximo: ${maximo} atleta(s).`;
 
     const quantidade = selecionados.length;
     let mensagem = '';
 
     if (quantidade < minimo) {
-        mensagem = `Faltam ${minimo - quantidade} atleta(s) para atingir o mínimo.`;
+        mensagem =
+            `Faltam ${minimo - quantidade} atleta(s) para atingir o mínimo.`;
     } else if (quantidade > maximo) {
-        mensagem = `Você selecionou atletas demais. O máximo permitido é ${maximo}.`;
+        mensagem =
+            `Você selecionou atletas demais. O máximo permitido é ${maximo}.`;
     } else {
-        mensagem = `Quantidade válida: ${quantidade} atleta(s) selecionado(s).`;
+        mensagem =
+            `Quantidade válida: ${quantidade} atleta(s) selecionado(s).`;
     }
 
     avisoQuantidade.textContent = mensagem;
     avisoQuantidade.hidden = false;
-    avisoQuantidade.className = quantidade >= minimo && quantidade <= maximo
-        ? 'notification is-success is-light'
-        : 'notification is-warning is-light';
 
-    return quantidade >= minimo &&
-        quantidade <= maximo &&
-        selecionados.every((checkbox) => {
+    const quantidadeValida =
+        quantidade >= minimo && quantidade <= maximo;
+
+    avisoQuantidade.style.background = quantidadeValida
+        ? '#edf8ef'
+        : '#fff4cc';
+
+    avisoQuantidade.style.borderColor = quantidadeValida
+        ? '#b8dfbf'
+        : '#e3c45e';
+
+    return quantidadeValida &&
+        selecionados.every(checkbox => {
             const sexo = checkbox.dataset.sexo || '';
             return categoria === 'misto' || sexo === categoria;
         });
@@ -577,19 +943,25 @@ function validarSelecao() {
 if (seletorModalidade && formulario) {
     seletorModalidade.addEventListener('change', validarSelecao);
 
-    formulario.querySelectorAll('input[name="atletas[]"]').forEach((checkbox) => {
+    formulario.querySelectorAll('input[name="atletas[]"]').forEach(checkbox => {
         checkbox.addEventListener('change', validarSelecao);
     });
 
-    formulario.addEventListener('submit', (evento) => {
+    formulario.addEventListener('submit', evento => {
         if (!validarSelecao()) {
             evento.preventDefault();
-            avisoQuantidade.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            avisoQuantidade.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
     });
 
     validarSelecao();
 }
 </script>
-</body>
-</html>
+
+<?php
+require_once __DIR__ . '/../../includes/representante/footer.php';
+?>

@@ -1,11 +1,6 @@
 -- =========================================================
 -- INTERCLASSE ETEC - BANCO DE DADOS COMPLETO
--- MySQL 8 / MariaDB (InnoDB, utf8mb4)
---
--- ATENCAO:
--- Este script APAGA as tabelas do Interclasse e recria tudo.
--- Faça backup antes de executar. Não execute em um banco com
--- dados que deseja preservar.
+-- MySQL 8 (InnoDB, utf8mb4)
 -- =========================================================
 
 CREATE DATABASE IF NOT EXISTS interclasse_etec
@@ -108,8 +103,6 @@ INSERT INTO modalidades (nome, descricao, categoria) VALUES
 
 -- =========================================================
 -- 3. USUARIOS
--- usuario_login foi incluído uma única vez (corrige os ALTER
--- TABLE duplicados do script enviado).
 -- Não são criadas contas automaticamente.
 -- =========================================================
 CREATE TABLE usuarios (
@@ -136,6 +129,7 @@ CREATE TABLE usuarios (
 CREATE TABLE atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
+    sexo ENUM('masculino', 'feminino') NOT NULL,
     numero_camisa TINYINT UNSIGNED NULL,
     turma_id INT UNSIGNED NOT NULL,
     cadastrado_por INT UNSIGNED NOT NULL,
@@ -145,6 +139,7 @@ CREATE TABLE atletas (
     aprovado_em DATETIME NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    observacao_aprovacao TEXT NULL,
 
     INDEX idx_atletas_turma (turma_id),
     INDEX idx_atletas_status (status_aprovacao),

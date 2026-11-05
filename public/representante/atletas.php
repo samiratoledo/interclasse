@@ -344,408 +344,515 @@ try {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="pt-BR">
+<?php
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+require_once __DIR__ . '/../../includes/representante/header.php';
 
-    <title>Meus atletas | Interclasse ETEC</title>
+?>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="../assets/style.css">
-</head>
+<style>
+    .atletas-page {
+        padding-bottom: 25px;
+    }
 
-<body>
+    .atletas-intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
 
-    <nav class="navbar is-dark" role="navigation" aria-label="Navegação principal">
-        <div class="navbar-brand">
-            <a class="navbar-item has-text-weight-bold" href="index.php">
-                Interclasse ETEC
-            </a>
+    .atletas-intro .title {
+        margin-bottom: 6px;
+    }
+
+    .atletas-card {
+        padding: 25px;
+        margin-bottom: 22px;
+    }
+
+    .atletas-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .atletas-card-title .icon {
+        color: #c99400;
+    }
+
+    .atletas-description {
+        color: #746b53;
+        font-size: 13px;
+        margin-bottom: 22px;
+    }
+
+    .atletas-form {
+        max-width: 750px;
+    }
+
+    .atletas-form .label {
+        color: #40391f;
+        font-size: 13px;
+    }
+
+    .atletas-form .input,
+    .atletas-form .select select {
+        border-radius: 8px;
+    }
+
+    .atletas-form .input:focus,
+    .atletas-form .select select:focus {
+        border-color: #e3ad12;
+        box-shadow: 0 0 0 0.125em #e3ad1230;
+    }
+
+    .atletas-table {
+        overflow-x: auto;
+    }
+
+    .atletas-table .table {
+        min-width: 850px;
+    }
+
+    .atletas-table .table th {
+        color: #655629;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .atletas-table .table td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    .atletas-table .table tbody tr:hover {
+        background: #fffaf0;
+    }
+
+    .atletas-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .atletas-actions form {
+        display: inline-flex;
+    }
+
+    .atletas-empty {
+        text-align: center;
+        padding: 35px 15px;
+        color: #746b53;
+    }
+
+    .atletas-empty .icon {
+        color: #d5b34e;
+        margin-bottom: 12px;
+    }
+
+    .atletas-count {
+        background: #fff4cc;
+        color: #665018;
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    @media (max-width: 600px) {
+        .atletas-card {
+            padding: 17px;
+        }
+
+        .atletas-intro {
+            align-items: flex-start;
+        }
+
+        .atletas-intro .button {
+            width: 100%;
+        }
+    }
+</style>
+
+<section class="atletas-page">
+
+    <!-- CABEÇALHO DA PÁGINA -->
+
+    <div class="atletas-intro">
+
+        <div>
+            <h1 class="title is-3">Meus atletas</h1>
+
+            <p class="subtitle is-6">
+                Gerencie os alunos que representarão sua turma no Interclasse.
+            </p>
+
+            <span class="atletas-count">
+                Turma: <?= escaparAtletasRepresentante($nomeTurma) ?>
+            </span>
         </div>
 
-        <div class="navbar-menu is-active">
-            <div class="navbar-start">
-                <a class="navbar-item" href="index.php">Painel</a>
-                <a class="navbar-item is-active" href="atletas.php">Meus atletas</a>
-            </div>
+        <a class="button is-dark" href="index.php">
+            <span>Voltar ao painel</span>
+        </a>
 
-            <div class="navbar-end">
-                <div class="navbar-item">
-                    <form action="../logout.php" method="POST">
-                        <input
-                            type="hidden"
-                            name="token_csrf"
-                            value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
-                        >
-                        <button class="button is-light is-small" type="submit">
-                            Sair
-                        </button>
-                    </form>
-                </div>
-            </div>
+    </div>
+
+    <!-- MENSAGENS -->
+
+    <?php if ($erro !== ''): ?>
+        <div class="notification is-danger is-dark">
+            <?= escaparAtletasRepresentante($erro) ?>
         </div>
-    </nav>
+    <?php endif; ?>
 
-    <section class="section">
-        <div class="container">
+    <?php if ($sucesso !== ''): ?>
+        <div class="notification is-success is-light">
+            <?= escaparAtletasRepresentante($sucesso) ?>
+        </div>
+    <?php endif; ?>
 
-            <div class="level is-align-items-flex-start">
-                <div class="level-left">
-                    <div>
-                        <h1 class="title">Meus atletas</h1>
-                        <p class="subtitle">
-                            Turma: <?= escaparAtletasRepresentante($nomeTurma) ?>
-                        </p>
-                    </div>
-                </div>
+    <!-- FORMULÁRIO -->
 
-                <div class="level-right">
-                    <a class="button is-light" href="index.php">
-                        Voltar ao painel
-                    </a>
-                </div>
-            </div>
+    <div class="box atletas-card">
 
-            <?php if ($erro !== ''): ?>
-                <div class="notification is-danger is-light">
-                    <?= escaparAtletasRepresentante($erro) ?>
-                </div>
+        <div class="atletas-card-title">
+            <h2 class="title is-4 mb-0">
+                <?= $atletaEdicao ? 'Editar atleta' : 'Cadastrar atleta' ?>
+            </h2>
+        </div>
+
+        <p class="atletas-description">
+            <?php if ($atletaEdicao): ?>
+                Altere os dados do atleta. Após salvar, o cadastro voltará para aprovação da administração.
+            <?php else: ?>
+                Preencha os dados abaixo para adicionar um aluno à equipe da sua turma. O cadastro ficará pendente até a aprovação da administração.
             <?php endif; ?>
+        </p>
 
-            <?php if ($sucesso !== ''): ?>
-                <div class="notification is-success is-light">
-                    <?= escaparAtletasRepresentante($sucesso) ?>
-                </div>
-            <?php endif; ?>
+        <form
+            method="POST"
+            action="atletas.php"
+            class="atletas-form"
+        >
+
+            <input
+                type="hidden"
+                name="token_csrf"
+                value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
+            >
+
+            <input
+                type="hidden"
+                name="acao"
+                value="<?= $atletaEdicao ? 'editar' : 'cadastrar' ?>"
+            >
 
             <?php if ($atletaEdicao): ?>
-
-                <!-- FORMULÁRIO DE EDIÇÃO -->
-
-                <div class="box">
-                    <h2 class="title is-4">Editar atleta</h2>
-
-                    <p class="mb-4">
-                        Após salvar, o cadastro voltará para a fila de aprovação da administração.
-                    </p>
-
-                    <form method="POST" action="atletas.php">
-
-                        <input
-                            type="hidden"
-                            name="token_csrf"
-                            value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
-                        >
-
-                        <input type="hidden" name="acao" value="editar">
-
-                        <input
-                            type="hidden"
-                            name="atleta_id"
-                            value="<?= (int) $atletaEdicao['id'] ?>"
-                        >
-
-                        <div class="field">
-                            <label class="label" for="nome_edicao">
-                                Nome completo do atleta
-                            </label>
-
-                            <div class="control">
-                                <input
-                                    class="input"
-                                    type="text"
-                                    id="nome_edicao"
-                                    name="nome"
-                                    maxlength="120"
-                                    value="<?= escaparAtletasRepresentante($atletaEdicao['nome']) ?>"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="sexo_edicao">
-                                Gênero do atleta *
-                            </label>
-
-                            <div class="control">
-                                <div class="select is-fullwidth">
-                                    <select id="sexo_edicao" name="sexo" required>
-                                        <option value="">Selecione o gênero</option>
-
-                                        <option
-                                            value="masculino"
-                                            <?= ($atletaEdicao['sexo'] ?? '') === 'masculino' ? 'selected' : '' ?>
-                                        >
-                                            Masculino
-                                        </option>
-
-                                        <option
-                                            value="feminino"
-                                            <?= ($atletaEdicao['sexo'] ?? '') === 'feminino' ? 'selected' : '' ?>
-                                        >
-                                            Feminino
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="numero_edicao">
-                                Número da camisa (opcional)
-                            </label>
-
-                            <div class="control">
-                                <input
-                                    class="input"
-                                    type="number"
-                                    id="numero_edicao"
-                                    name="numero_camisa"
-                                    min="0"
-                                    max="999"
-                                    value="<?= escaparAtletasRepresentante($atletaEdicao['numero_camisa'] ?? '') ?>"
-                                >
-                            </div>
-                        </div>
-
-                        <button class="button is-primary" type="submit">
-                            Salvar alterações
-                        </button>
-
-                        <a class="button is-light" href="atletas.php">
-                            Cancelar
-                        </a>
-
-                    </form>
-                </div>
-
-            <?php else: ?>
-
-                <!-- FORMULÁRIO DE CADASTRO -->
-
-                <div class="box">
-                    <h2 class="title is-4">Cadastrar atleta</h2>
-
-                    <p class="mb-4">
-                        O cadastro será enviado à administração para aprovação.
-                    </p>
-
-                    <form method="POST" action="atletas.php">
-
-                        <input
-                            type="hidden"
-                            name="token_csrf"
-                            value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
-                        >
-
-                        <input type="hidden" name="acao" value="cadastrar">
-
-                        <div class="field">
-                            <label class="label" for="nome">
-                                Nome completo do atleta
-                            </label>
-
-                            <div class="control">
-                                <input
-                                    class="input"
-                                    type="text"
-                                    id="nome"
-                                    name="nome"
-                                    maxlength="120"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="sexo">
-                                Gênero do atleta *
-                            </label>
-
-                            <div class="control">
-                                <div class="select is-fullwidth">
-                                    <select id="sexo" name="sexo" required>
-                                        <option value="">Selecione o gênero</option>
-                                        <option value="masculino">Masculino</option>
-                                        <option value="feminino">Feminino</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="numero_camisa">
-                                Número da camisa (opcional)
-                            </label>
-
-                            <div class="control">
-                                <input
-                                    class="input"
-                                    type="number"
-                                    id="numero_camisa"
-                                    name="numero_camisa"
-                                    min="0"
-                                    max="999"
-                                >
-                            </div>
-
-                            <p class="help">
-                                Não informe um número que já esteja sendo usado por outro atleta da turma.
-                            </p>
-                        </div>
-
-                        <button class="button is-primary" type="submit">
-                            Cadastrar atleta
-                        </button>
-
-                    </form>
-                </div>
-
+                <input
+                    type="hidden"
+                    name="atleta_id"
+                    value="<?= (int) $atletaEdicao['id'] ?>"
+                >
             <?php endif; ?>
 
-            <!-- LISTAGEM DE ATLETAS -->
+            <div class="field">
 
-            <div class="box">
-                <h2 class="title is-4">Atletas cadastrados</h2>
+                <label class="label" for="nome">
+                    Nome completo do atleta *
+                </label>
 
-                <?php if ($atletas === []): ?>
+                <div class="control">
+                    <input
+                        class="input"
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        maxlength="120"
+                        placeholder="Digite o nome completo"
+                        value="<?= escaparAtletasRepresentante($atletaEdicao['nome'] ?? '') ?>"
+                        required
+                    >
+                </div>
 
-                    <div class="notification is-info is-light">
-                        Sua turma ainda não possui atletas cadastrados.
-                    </div>
-
-                <?php else: ?>
-
-                    <div class="table-container">
-                        <table class="table is-fullwidth is-striped is-hoverable">
-
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Gênero</th>
-                                    <th>Camisa</th>
-                                    <th>Aprovação</th>
-                                    <th>Observação da administração</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <?php foreach ($atletas as $atleta): ?>
-
-                                    <tr>
-                                        <td>
-                                            <?= escaparAtletasRepresentante($atleta['nome']) ?>
-                                        </td>
-
-                                        <td>
-                                            <?php
-                                            if ($atleta['sexo'] === 'masculino') {
-                                                echo 'Masculino';
-                                            } elseif ($atleta['sexo'] === 'feminino') {
-                                                echo 'Feminino';
-                                            } else {
-                                                echo 'Não informado';
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <td>
-                                            <?= $atleta['numero_camisa'] === null
-                                                ? '—'
-                                                : (int) $atleta['numero_camisa'] ?>
-                                        </td>
-
-                                        <td>
-                                            <?php if ($atleta['status_aprovacao'] === 'aprovado'): ?>
-
-                                                <span class="tag is-success is-light">
-                                                    Aprovado
-                                                </span>
-
-                                            <?php elseif ($atleta['status_aprovacao'] === 'rejeitado'): ?>
-
-                                                <span class="tag is-danger is-light">
-                                                    Rejeitado
-                                                </span>
-
-                                            <?php else: ?>
-
-                                                <span class="tag is-warning is-light">
-                                                    Pendente
-                                                </span>
-
-                                            <?php endif; ?>
-                                        </td>
-
-                                        <td>
-                                            <?= escaparAtletasRepresentante(
-                                                $atleta['observacao_aprovacao'] ?? '—'
-                                            ) ?>
-                                        </td>
-
-                                        <td>
-                                            <div class="buttons are-small">
-
-                                                <a
-                                                    class="button is-info is-light"
-                                                    href="atletas.php?editar=<?= (int) $atleta['id'] ?>"
-                                                >
-                                                    Editar
-                                                </a>
-
-                                                <form
-                                                    method="POST"
-                                                    action="atletas.php"
-                                                    onsubmit="return confirm('Tem certeza de que deseja remover este atleta da lista?');"
-                                                >
-
-                                                    <input
-                                                        type="hidden"
-                                                        name="token_csrf"
-                                                        value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
-                                                    >
-
-                                                    <input
-                                                        type="hidden"
-                                                        name="acao"
-                                                        value="excluir"
-                                                    >
-
-                                                    <input
-                                                        type="hidden"
-                                                        name="atleta_id"
-                                                        value="<?= (int) $atleta['id'] ?>"
-                                                    >
-
-                                                    <button
-                                                        class="button is-danger is-light"
-                                                        type="submit"
-                                                    >
-                                                        Excluir
-                                                    </button>
-
-                                                </form>
-
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                <?php endforeach; ?>
-                            </tbody>
-
-                        </table>
-                    </div>
-
-                <?php endif; ?>
             </div>
 
-        </div>
-    </section>
+            <div class="columns">
 
-</body>
-</html>
+                <div class="column">
+
+                    <div class="field">
+
+                        <label class="label" for="sexo">
+                            Gênero do atleta *
+                        </label>
+
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="sexo" name="sexo" required>
+
+                                    <option value="">
+                                        Selecione
+                                    </option>
+
+                                    <option
+                                        value="masculino"
+                                        <?= ($atletaEdicao['sexo'] ?? '') === 'masculino' ? 'selected' : '' ?>
+                                    >
+                                        Masculino
+                                    </option>
+
+                                    <option
+                                        value="feminino"
+                                        <?= ($atletaEdicao['sexo'] ?? '') === 'feminino' ? 'selected' : '' ?>
+                                    >
+                                        Feminino
+                                    </option>
+
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="column">
+
+                    <div class="field">
+
+                        <label class="label" for="numero_camisa">
+                            Número da camisa
+                        </label>
+
+                        <div class="control">
+                            <input
+                                class="input"
+                                type="number"
+                                id="numero_camisa"
+                                name="numero_camisa"
+                                min="0"
+                                max="999"
+                                placeholder="Opcional"
+                                value="<?= escaparAtletasRepresentante($atletaEdicao['numero_camisa'] ?? '') ?>"
+                            >
+                        </div>
+
+                        <p class="help">
+                            Não pode repetir na mesma turma.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="field is-grouped is-grouped-multiline mt-5">
+
+                <div class="control">
+                    <button class="button is-primary" type="submit">
+                        <span>
+                            <?= $atletaEdicao ? 'Salvar alterações' : 'Cadastrar atleta' ?>
+                        </span>
+                    </button>
+                </div>
+
+                <?php if ($atletaEdicao): ?>
+                    <div class="control">
+                        <a class="button is-dark" href="atletas.php">
+                            Cancelar edição
+                        </a>
+                    </div>
+                <?php endif; ?>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- LISTAGEM -->
+
+    <div class="box atletas-card">
+
+        <div class="atletas-intro">
+
+            <div>
+                <h2 class="title is-4 mb-2">
+                    Atletas cadastrados
+                </h2>
+
+                <p class="atletas-description mb-0">
+                    Consulte a situação dos cadastros da sua turma.
+                </p>
+            </div>
+
+            <span class="atletas-count">
+                <?= count($atletas) ?> atleta(s)
+            </span>
+
+        </div>
+
+        <?php if ($atletas === []): ?>
+
+            <div class="atletas-empty">
+
+                <h3 class="title is-5">
+                    Nenhum atleta cadastrado
+                </h3>
+
+                <p>
+                    Utilize o formulário acima para cadastrar o primeiro atleta da sua turma.
+                </p>
+
+            </div>
+
+        <?php else: ?>
+
+            <div class="atletas-table">
+
+                <table class="table is-fullwidth is-hoverable">
+
+                    <thead>
+                        <tr>
+                            <th>Atleta</th>
+                            <th>Gênero</th>
+                            <th>Camisa</th>
+                            <th>Situação</th>
+                            <th>Observação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <?php foreach ($atletas as $atleta): ?>
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        <?= escaparAtletasRepresentante($atleta['nome']) ?>
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <?= $atleta['sexo'] === 'masculino'
+                                        ? 'Masculino'
+                                        : ($atleta['sexo'] === 'feminino' ? 'Feminino' : 'Não informado') ?>
+                                </td>
+
+                                <td>
+                                    <?php if ($atleta['numero_camisa'] !== null): ?>
+                                        <span class="tag is-dark">
+                                            #<?= (int) $atleta['numero_camisa'] ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="has-text-grey">—</span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+
+                                    <?php if ($atleta['status_aprovacao'] === 'aprovado'): ?>
+
+                                        <span class="tag is-success is-dark">
+                                            Aprovado
+                                        </span>
+
+                                    <?php elseif ($atleta['status_aprovacao'] === 'rejeitado'): ?>
+
+                                        <span class="tag is-danger is-dark">
+                                            Rejeitado
+                                        </span>
+
+                                    <?php else: ?>
+
+                                        <span class="tag is-warning is-dark">
+                                            Pendente
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </td>
+
+                                <td>
+                                    <?= escaparAtletasRepresentante(
+                                        $atleta['observacao_aprovacao'] ?? '—'
+                                    ) ?>
+                                </td>
+
+                                <td>
+
+                                    <div class="atletas-actions">
+
+                                        <a
+                                            class="button is-small is-info is-dark"
+                                            href="atletas.php?editar=<?= (int) $atleta['id'] ?>"
+                                            title="Editar atleta"
+                                        >
+                                            <span>Editar</span>
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="atletas.php"
+                                            onsubmit="return confirm('Tem certeza de que deseja remover este atleta da lista?');"
+                                        >
+
+                                            <input
+                                                type="hidden"
+                                                name="token_csrf"
+                                                value="<?= escaparAtletasRepresentante(gerarTokenCsrf()) ?>"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="acao"
+                                                value="excluir"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="atleta_id"
+                                                value="<?= (int) $atleta['id'] ?>"
+                                            >
+
+                                            <button
+                                                class="button is-small is-danger is-dark"
+                                                type="submit"
+                                                title="Excluir atleta"
+                                            >
+                                                <span>Excluir</span>
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        <?php endif; ?>
+
+    </div>
+
+</section>
+
+<?php
+require_once __DIR__ . '/../../includes/representante/footer.php';
+?>
