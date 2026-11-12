@@ -3,7 +3,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-$baseUrl = '/interclasse-etec';
+$baseUrl = urlBase();
 $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
 ?>
 
@@ -129,9 +129,23 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             color: white;
         }
 
-        .main-nav .logout {
+        .logout-form {
             margin-left: auto;
+        }
+
+        .main-nav .logout {
+            background: transparent;
+            border: none;
+            cursor: pointer;
             color: #ffe0dc;
+            padding: 9px 12px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .main-nav .logout:hover {
+            background: #ffffff20;
         }
 
         .page-content {
@@ -182,9 +196,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 font-size: 12px;
             }
 
-            .main-nav .logout {
-                margin-left: 0;
-            }
+            .logout-form { margin-left: 0; }
 
             .page-content {
                 padding: 0 12px;
@@ -243,23 +255,17 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             </div>
 
             <nav class="main-nav">
-                <a href="<?= $baseUrl ?>/public/admin/index.php">Painel</a>
                 <a href="<?= $baseUrl ?>/public/admin/regulamento.php">Regulamento</a>
                 <a href="<?= $baseUrl ?>/public/admin/turmas.php">Turmas</a>
                 <a href="<?= $baseUrl ?>/public/admin/modalidades.php">Modalidades</a>
                 <a href="<?= $baseUrl ?>/public/admin/inscricoes.php">Inscrições</a>
                 <a href="<?= $baseUrl ?>/public/admin/aprovar-atletas.php">Aprovar atletas</a>
                 <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
-                <a href="<?= $baseUrl ?>/public/admin/partidas.php">Partidas</a>
+                <a href="<?= $baseUrl ?>/public/arbitro/index.php">Minhas partidas</a>
                 <form action="<?= $baseUrl ?>/public/logout.php" method="POST" class="logout-form">
-
                     <input type="hidden" name="token_csrf"
                         value="<?= htmlspecialchars(gerarTokenCsrf(), ENT_QUOTES, 'UTF-8') ?>">
-
-                    <button type="submit" class="logout">
-                        Sair
-                    </button>
-
+                    <button type="submit" class="logout">Sair</button>
                 </form>
             </nav>
         </div>

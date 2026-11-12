@@ -5,10 +5,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+exigirPerfil('admin', 'arbitro');
 
+$usuario = usuarioAtual();
 /*
 |--------------------------------------------------------------------------
 | Autorização
@@ -40,6 +39,12 @@ $partidaId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$partidaId || $partidaId < 1) {
     http_response_code(400);
     exit('Partida inválida.');
+}
+
+// Árbitro só mexe nas partidas em que é o responsável (admin mexe em todas).
+if (!$ehAdmin && (int) ($partida['responsavel_id'] ?? 0) !== $usuarioId) {
+    http_response_code(403);
+    exit('Você não é o responsável por esta partida.');
 }
 
 $stmt = $pdo->prepare("

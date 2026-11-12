@@ -166,4 +166,4 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Árbitro';
         </div>
     </header>
 
-    <main class="page-content"></main>
+    <main class="page-content">

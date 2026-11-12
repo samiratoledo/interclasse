@@ -1,3 +1,189 @@
 h1.title.is-3, h2.title.is-5 {
     font-family: 'Montserrat', sans-serif !important;
 }
+
+/* PADRÃO GERAL */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #F4F7FB;
+    color: #243247;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* CABEÇALHO */
+.site-header {
+    background: #0B2948;
+    color: white;
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 20px;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.branding {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 6px;
+    padding: 3px;
+}
+
+.brand-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.brand-subtitle {
+    font-size: 11px;
+    color: #D8E4F1;
+    margin: 2px 0 0;
+}
+
+.profile-name {
+    font-size: 12px;
+    border: 1px solid #ffffff55;
+    border-radius: 20px;
+    padding: 6px 10px;
+}
+
+/* NAVEGAÇÃO */
+.main-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding-top: 6px;
+}
+
+.main-nav a,
+.main-nav .logout {
+    color: #EDF4FC;
+    text-decoration: none;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.main-nav a:hover,
+.main-nav .logout:hover {
+    background: #ffffff20;
+    color: white;
+}
+
+.logout-form {
+    margin-left: auto;
+}
+
+.main-nav .logout {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.main-nav .logout:hover {
+    color: white;
+}
+
+/* CONTEÚDO */
+.page-content {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    min-height: 0;
+    margin: 12px auto;
+    padding: 0 20px;
+}
+
+/* CARDS */
+.box {
+    background: white;
+    color: #243247;
+}
+
+/* RODAPÉ */
+.site-footer {
+    width: 100%;
+    margin-top: auto;
+    background: #0B2948;
+    border-top: 1px solid #D6E0EB;
+    color: #D6E0EB;
+    padding: 18px;
+    text-align: center;
+    font-size: 12px;
+}
+
+/* TELAS MENORES */
+@media (max-width: 600px) {
+    .header-container {
+        padding: 8px 12px;
+    }
+
+    .header-top {
+        gap: 8px;
+    }
+
+    .logo {
+        width: 34px;
+        height: 34px;
+    }
+
+    .branding {
+        gap: 6px;
+    }
+
+    .brand-title {
+        font-size: 13px;
+    }
+
+    .brand-subtitle {
+        font-size: 10px;
+    }
+
+    .profile-name {
+        font-size: 11px;
+    }
+
+    .main-nav a,
+    .main-nav .logout {
+        padding: 7px;
+        font-size: 12px;
+    }
+
+    .logout-form {
+        margin-left: 0;
+    }
+
+    .page-content {
+        padding: 0 12px;
+        margin: 10px auto;
+    }
+}

@@ -330,6 +330,3 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
     </header>
 
     <main class="page-content">
-</body>
-
-</html>

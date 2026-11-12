@@ -331,10 +331,6 @@ try {
 require_once __DIR__ . '/../../includes/representante/header.php';
 ?>
 
-<?php
-require_once __DIR__ . '/../../includes/representante/header.php';
-?>
-
 <style>
     .inscricoes-page {
         padding-bottom: 25px;

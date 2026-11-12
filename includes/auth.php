@@ -17,6 +17,33 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /**
+ * Descobre a pasta do projeto na URL (tudo que vem antes de /public/).
+ * Ex.: /interclasse-etec/public/admin/x.php => /interclasse-etec
+ */
+function urlBase(): string
+{
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $pos = strpos($script, '/public/');
+
+    return $pos === false ? '' : substr($script, 0, $pos);
+}
+
+/**
+ * Página inicial de cada perfil.
+ */
+function urlInicial(string $perfil): string
+{
+    $base = urlBase() . '/public/';
+
+    return match ($perfil) {
+        'admin' => $base . 'admin/index.php',
+        'representante' => $base . 'representante/index.php',
+        'arbitro' => $base . 'arbitro/index.php',
+        default => $base . 'login.php',
+    };
+}
+
+/**
  * Verifica se existe um usuário autenticado.
  */
 function usuarioAutenticado(): bool
@@ -37,12 +64,73 @@ function usuarioAtual(): ?array
 }
 
 /**
+ * Apaga a sessão e o cookie.
+ */
+function encerrarSessao(): void
+{
+    $_SESSION = [];
+
+    if (ini_get('session.use_cookies')) {
+        $p = session_get_cookie_params();
+
+        setcookie(session_name(), '', [
+            'expires' => time() - 42000,
+            'path' => $p['path'],
+            'secure' => $p['secure'],
+            'httponly' => $p['httponly'],
+            'samesite' => $p['samesite'] ?? 'Lax',
+        ]);
+    }
+
+    session_destroy();
+}
+
+/**
+ * Confere no banco se a conta continua ativa e com o mesmo perfil.
+ * Exige que a página já tenha carregado config/database.php ($pdo).
+ */
+function contaAindaValida(): bool
+{
+    global $pdo;
+
+    if (!($pdo instanceof PDO)) {
+        return false;
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT perfil, turma_id FROM usuarios WHERE id = ? AND ativo = 1 LIMIT 1'
+        );
+        $stmt->execute([(int) $_SESSION['usuario']['id']]);
+        $conta = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log($e->getMessage());
+        return false;
+    }
+
+    if (!$conta || $conta['perfil'] !== $_SESSION['usuario']['perfil']) {
+        return false;
+    }
+
+    // Mantém a turma da sessão sempre atualizada.
+    $_SESSION['usuario']['turma_id'] = $conta['turma_id'] !== null
+        ? (int) $conta['turma_id']
+        : null;
+
+    return true;
+}
+
+/**
  * Exige autenticação para acessar uma página.
  */
 function exigirLogin(): void
 {
-    if (!usuarioAutenticado()) {
-        header('Location: ../login.php');
+    if (!usuarioAutenticado() || !contaAindaValida()) {
+        if (usuarioAutenticado()) {
+            encerrarSessao();
+        }
+
+        header('Location: ' . urlBase() . '/public/login.php');
         exit;
     }
 }
