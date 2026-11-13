@@ -41,13 +41,7 @@ if (!hash_equals($senha, $confirmacao)) {
 
 try {
     $pdo->beginTransaction();
-
-    $total = (int) $pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
-    if ($total > 0) {
-        $pdo->rollBack();
-        exit("Já existem usuários cadastrados. Cadastro cancelado.\n");
-    }
-
+    
     $sql = 'INSERT INTO usuarios (nome, usuario_login, senha_hash, perfil, turma_id, ativo)
             VALUES (:nome, :usuario_login, :senha_hash, :perfil, NULL, 1)';
     $stmt = $pdo->prepare($sql);

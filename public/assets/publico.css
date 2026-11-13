@@ -1,0 +1,467 @@
+/* ===== BASE ===== */
+.pub-body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f4f7fb;
+    color: #243247;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.pub-main {
+    flex: 1;
+    width: 100%;
+}
+
+/* ===== CABEÇALHO ===== */
+.pub-nav.navbar {
+    background: #0b2948;
+    box-shadow: 0 3px 12px #0002;
+    min-height: 68px;
+}
+
+.pub-nav .navbar-brand,
+.pub-nav .navbar-menu,
+.pub-nav .navbar-end {
+    align-items: center;
+}
+
+.pub-marca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-weight: 800;
+    font-size: 17px;
+    color: #ffffff;
+}
+
+.pub-marca:hover,
+.pub-marca:focus,
+.pub-marca:focus-within {
+    background: transparent;
+    color: #ffffff;
+}
+
+.pub-marca img {
+    width: 48px;
+    height: 48px;
+    max-height: none;
+    object-fit: contain;
+    padding: 3px;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+/* Links: pílulas com altura própria, sem preencher a barra toda */
+.pub-nav .navbar-end > a.navbar-item {
+    color: #edf4fc;
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0 14px;
+    height: 36px;
+    margin: 0 2px;
+    transition: background .2s;
+}
+
+/* O foco depois do clique não mantém o fundo */
+.pub-nav .navbar-end > a.navbar-item:focus,
+.pub-nav .navbar-end > a.navbar-item:focus-within {
+    background: transparent;
+    color: #edf4fc;
+}
+
+.pub-nav .navbar-end > a.navbar-item:hover {
+    background: #ffffff20;
+    color: #ffffff;
+}
+
+.pub-nav .navbar-end > a.navbar-item.is-active {
+    background: #ffffff30;
+    color: #ffffff;
+}
+
+/* Item do botão Entrar / Meu painel: sem fundo do Bulma */
+.pub-nav .navbar-end > div.navbar-item {
+    background: transparent;
+    padding: 0 0 0 8px;
+}
+
+.pub-btn-painel {
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    height: 36px;
+    padding: 0 16px;
+    background: #ffffff;
+    color: #0b2948;
+}
+
+.pub-btn-painel:hover {
+    background: #fff4cc;
+    color: #0b2948;
+}
+
+/* Hambúrguer (celular) */
+.pub-nav .navbar-burger {
+    color: #ffffff;
+    height: 68px;
+}
+
+.pub-nav .navbar-burger:hover {
+    background: #ffffff20;
+}
+
+/* Menu aberto no celular: itens em largura total */
+@media (max-width: 1023px) {
+    .pub-nav .navbar-menu {
+        background: #0b2948;
+        box-shadow: 0 8px 16px #0003;
+        padding: 8px 12px 14px;
+    }
+
+    .pub-nav .navbar-end > a.navbar-item {
+        height: 44px;
+        margin: 2px 0;
+    }
+
+    .pub-nav .navbar-end > div.navbar-item {
+        padding: 8px 0 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .pub-marca {
+        font-size: 13px;
+    }
+
+    .pub-marca img {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+@media (max-width: 600px) {
+    .pub-marca {
+        font-size: 13px;
+    }
+
+    .pub-marca img {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+/* ===== PÁGINAS PÚBLICAS ===== */
+
+.pub-hero {
+    max-width: 1200px;
+    margin: 24px auto 0;
+    padding: 48px 24px;
+    background: #0b2948;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px #0002;
+}
+
+.pub-hero .container {
+    max-width: 100%;
+}
+
+.pub-hero__eyebrow {
+    margin: 0 0 8px;
+    font-size: 14px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+.pub-hero .title {
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.pub-hero .subtitle {
+    color: #d8e4f1;
+    margin-bottom: 20px;
+}
+
+.pub-hero .buttons {
+    justify-content: center;
+}
+
+.pub-conteudo {
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 20px;
+}
+
+.pub-conteudo > h1.title {
+    color: #0b2948;
+    font-weight: 800;
+}
+
+/* Seções em card */
+.pub-secao {
+    background: #ffffff;
+    border: 1px solid #e3eaf3;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #0000000a;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+}
+
+.pub-secao__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e3eaf3;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #0b2948;
+}
+
+.pub-vazio {
+    color: #5b6b80;
+    font-style: italic;
+}
+
+.pub-secao a {
+    color: #1565c0;
+    font-size: 14px;
+}
+
+/* Ponto "ao vivo" */
+.pub-ponto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #d32f2f;
+    animation: pub-pulso 1.4s infinite;
+}
+
+@keyframes pub-pulso {
+    50% { opacity: .3; }
+}
+
+/* Grade e cartões de partida */
+.pub-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.pub-card {
+    background: #f4f7fb;
+    border: 1px solid #e3eaf3;
+    border-radius: 12px;
+    padding: 16px;
+    color: #243247;
+    transition: box-shadow .2s, transform .2s;
+}
+
+.pub-card:hover {
+    box-shadow: 0 6px 16px #0b294822;
+    transform: translateY(-2px);
+}
+
+.pub-card__confronto,
+.pub-placar-grande .pub-card__confronto {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pub-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    text-align: center;
+}
+
+.pub-time__nome {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0b2948;
+}
+
+.pub-brasao {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.pub-brasao--grande {
+    width: 72px;
+    height: 72px;
+}
+
+.pub-brasao--vazio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e3eaf3;
+    color: #0b2948;
+    font-weight: 800;
+}
+
+.pub-placar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0b2948;
+}
+
+.pub-placar--grande {
+    font-size: 44px;
+}
+
+.pub-placar__x {
+    font-size: 18px;
+    color: #5b6b80;
+}
+
+/* Detalhe da partida */
+.pub-placar-grande {
+    background: #0b2948;
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: 0 3px 12px #0002;
+}
+
+.pub-placar-grande__topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.pub-placar-grande .pub-time__nome,
+.pub-placar-grande .pub-placar,
+.pub-placar-grande .pub-placar__x {
+    color: #ffffff;
+}
+
+.pub-relogio {
+    margin-top: 16px;
+    font-weight: 700;
+    color: #d8e4f1;
+}
+
+.pub-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.pub-info dt {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #5b6b80;
+}
+
+.pub-info dd {
+    margin: 4px 0 0;
+    font-weight: 600;
+    color: #0b2948;
+}
+
+.pub-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pub-timeline li {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e3eaf3;
+}
+
+.pub-timeline time {
+    font-weight: 700;
+    color: #0b2948;
+}
+
+.pub-video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pub-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Filtros */
+.pub-filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: end;
+    background: #ffffff;
+    border: 1px solid #e3eaf3;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #0000000a;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.pub-filtros .label {
+    color: #0b2948;
+}
+
+.pub-filtros__acoes {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 600px) {
+    .pub-hero {
+        margin: 12px 12px 0;
+        padding: 32px 16px;
+    }
+
+    .pub-conteudo {
+        padding: 0 12px;
+    }
+
+    .pub-secao,
+    .pub-placar-grande {
+        padding: 20px 16px;
+    }
+
+    .pub-secao__titulo {
+        font-size: 20px;
+    }
+
+    .pub-placar--grande {
+        font-size: 32px;
+    }
+}

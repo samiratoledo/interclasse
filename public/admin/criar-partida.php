@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 
 exigirPerfil('admin');
 
-$baseUrl = '/interclasse-etec';
+$baseUrl = urlBase();
 $erro = '';
 
 $modalidades = $pdo->query(

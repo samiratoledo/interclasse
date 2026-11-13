@@ -8,17 +8,20 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Interclasse ETEC Zona Leste</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
     <link rel="stylesheet" href="<?= $baseUrl ?>/public/assets/style.css?v=2">
 
@@ -26,7 +29,6 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
         * {
             box-sizing: border-box;
         }
-
 
         html {
             min-height: 100%;
@@ -38,33 +40,27 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             display: flex;
             flex-direction: column;
             background: #1f3d63;
-            color: #243247;
-            font-family: Arial, sans-serif;
+            color: #fcfcfc;
+            font-family: 'Montserrat', sans-serif;
         }
 
-        /* Footer sempre no final */
-        .site-footer {
-            width: 100%;
-            margin-top: auto;
-            background: #0b2948;
-            border-top: 1px solid #d6e0eb;
-            color: #d6e0eb;
-            padding: 18px;
-            text-align: center;
-            font-size: 12px;
-        }
-
+        /* Cabeçalho */
 
         .site-header {
             background: #0b2948;
-            color: white;
-            padding: 0;
+            color: #ffffff;
+            box-shadow: 0 3px 12px #0002;
         }
 
         .header-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 8px 20px;
+            padding: 12px 20px 0;
+        }
+
+        .heading{
+            color: white;
+            font-size: 15px;
         }
 
         .header-top {
@@ -72,61 +68,71 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .logo {
-            width: 42px;
-            height: 42px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 3px;
+            background: #ffffff;
         }
 
         .brand-title {
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 17px;
+            font-weight: 800;
             margin: 0;
+            color: #ffffff;
         }
 
         .brand-subtitle {
             font-size: 11px;
             color: #d8e4f1;
-            margin: 2px 0 0;
+            margin: 3px 0 0;
         }
 
         .profile-name {
             font-size: 12px;
+            font-weight: 600;
             border: 1px solid #ffffff55;
             border-radius: 20px;
-            padding: 6px 10px;
+            padding: 8px 12px;
+            color: #ffffff;
         }
+
+        /* Navegação */
 
         .main-nav {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 4px;
-            padding-top: 6px;
+            gap: 5px;
+            padding: 12px 0;
         }
 
-        .main-nav a {
+        .main-nav a,
+        .main-nav .logout {
             color: #edf4fc;
             text-decoration: none;
-            padding: 7px 10px;
-            border-radius: 6px;
+            padding: 9px 12px;
+            border-radius: 7px;
             font-size: 13px;
+            font-weight: 600;
+            transition: background .2s;
         }
 
-        .main-nav a:hover {
+        .main-nav a:hover,
+        .main-nav .logout:hover {
             background: #ffffff20;
-            color: white;
+            color: #ffffff;
         }
 
         .logout-form {
@@ -138,45 +144,48 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             border: none;
             cursor: pointer;
             color: #ffe0dc;
-            padding: 9px 12px;
-            border-radius: 7px;
-            font-size: 14px;
             font-family: inherit;
         }
 
-        .main-nav .logout:hover {
-            background: #ffffff20;
-        }
+        /* Conteúdo */
 
         .page-content {
             flex: 1;
             width: 100%;
             max-width: 1200px;
             min-height: 0;
-            margin: 12px auto;
+            margin: 24px auto;
             padding: 0 20px;
         }
 
         .box {
             background: #0b2948;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000a;
+        }
+
+        /* Rodapé */
+
+        .site-footer {
+            width: 100%;
+            align-self: stretch;
+            margin-top: auto;
+            background: #0b2948;
+            color: #d6e0eb;
+            padding: 18px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #d6e0eb;
         }
 
         @media (max-width: 600px) {
             .header-container {
-                padding: 8px 12px;
-            }
-
-            .header-top {
-                gap: 8px;
+                padding: 10px 12px 0;
             }
 
             .logo {
-                width: 34px;
-                height: 34px;
-            }
-
-            .branding {
-                gap: 6px;
+                width: 38px;
+                height: 38px;
             }
 
             .brand-title {
@@ -188,73 +197,66 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             }
 
             .profile-name {
+                font-size: 10px;
+                padding: 6px 9px;
+            }
+
+            .main-nav {
+                gap: 3px;
+            }
+
+            .main-nav a,
+            .main-nav .logout {
+                padding: 7px;
                 font-size: 11px;
             }
 
-            .main-nav a {
-                padding: 7px;
-                font-size: 12px;
+            .logout-form {
+                margin-left: 0;
             }
-
-            .logout-form { margin-left: 0; }
 
             .page-content {
                 padding: 0 12px;
-                margin: 10px auto;
-            }
-        }
-
-        .logout-form {
-            margin-left: auto;
-        }
-
-        .main-nav .logout {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: #ffe0dc;
-            text-decoration: none;
-            padding: 7px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-family: inherit;
-        }
-
-        .main-nav .logout:hover {
-            background: #ffffff20;
-            color: white;
-        }
-
-        @media (max-width: 600px) {
-            .logout-form {
-                margin-left: 0;
+                margin: 16px auto;
             }
         }
     </style>
 </head>
 
 <body>
+
     <header class="site-header">
+
         <div class="header-container">
+
             <div class="header-top">
+
                 <div class="branding">
+
                     <img class="logo" src="<?= $baseUrl ?>/public/assets/logo-etec-zl.png" alt="Logo ETEC Zona Leste">
 
                     <div>
-                        <p class="brand-title">Interclasse ETEC Zona Leste</p>
-                        <p class="brand-subtitle">Painel administrativo</p>
+                        <p class="brand-title">
+                            Interclasse ETEC Zona Leste
+                        </p>
+
+                        <p class="brand-subtitle">
+                            Painel administrativo
+                        </p>
                     </div>
 
-                    <!-- <img class="logo" src="<?= $baseUrl ?>/public/assets/img/logo-prisma.png" alt="Logo Grêmio Prisma"> -->
                 </div>
 
                 <span class="profile-name">
                     Administração ·
                     <?= htmlspecialchars($nomeUsuario, ENT_QUOTES, 'UTF-8') ?>
                 </span>
+
             </div>
 
             <nav class="main-nav">
+
+                <a href="<?= $baseUrl ?>/public/admin/index.php">Painel administrativo</a>
                 <a href="<?= $baseUrl ?>/public/admin/regulamento.php">Regulamento</a>
                 <a href="<?= $baseUrl ?>/public/admin/turmas.php">Turmas</a>
                 <a href="<?= $baseUrl ?>/public/admin/modalidades.php">Modalidades</a>
@@ -262,13 +264,22 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 <a href="<?= $baseUrl ?>/public/admin/aprovar-atletas.php">Aprovar atletas</a>
                 <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
                 <a href="<?= $baseUrl ?>/public/arbitro/index.php">Minhas partidas</a>
+
                 <form action="<?= $baseUrl ?>/public/logout.php" method="POST" class="logout-form">
+
                     <input type="hidden" name="token_csrf"
                         value="<?= htmlspecialchars(gerarTokenCsrf(), ENT_QUOTES, 'UTF-8') ?>">
-                    <button type="submit" class="logout">Sair</button>
+
+                    <button type="submit" class="logout">
+                        Sair
+                    </button>
+
                 </form>
+
             </nav>
+
         </div>
+
     </header>
 
     <main class="page-content">

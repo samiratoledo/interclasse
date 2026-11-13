@@ -4,13 +4,13 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-$baseUrl = '/interclasse-etec';
+$baseUrl = urlBase();
 $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
 
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">

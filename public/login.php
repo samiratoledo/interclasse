@@ -14,7 +14,7 @@ if (usuarioAutenticado()) {
     } elseif ($perfil === 'representante') {
         header('Location: representante/index.php');
     } else {
-        header('Location: arbitro/partida.php');
+        header('Location: arbitro/index.php');
     }
 
     exit;
@@ -30,11 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!validarTokenCsrf($token)) {
         $erro = 'Sessão expirada ou formulário inválido. Atualize a página.';
-    } elseif (
-        $nomeUsuario === ''
-        || strlen($nomeUsuario) > 50
-        || $senha === ''
-    ) {
+    } elseif ($nomeUsuario === '' || strlen($nomeUsuario) > 50 || $senha === '') {
         $erro = 'Informe um usuário válido e sua senha.';
     } else {
         try {
@@ -77,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($conta['perfil'] === 'representante') {
                     header('Location: representante/index.php');
                 } elseif ($conta['perfil'] === 'arbitro') {
-                    header('Location: arbitro/partida.php');
+                    header('Location: arbitro/index.php');
                 } else {
                     $_SESSION = [];
                     session_destroy();

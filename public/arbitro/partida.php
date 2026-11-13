@@ -41,12 +41,6 @@ if (!$partidaId || $partidaId < 1) {
     exit('Partida inválida.');
 }
 
-// Árbitro só mexe nas partidas em que é o responsável (admin mexe em todas).
-if (!$ehAdmin && (int) ($partida['responsavel_id'] ?? 0) !== $usuarioId) {
-    http_response_code(403);
-    exit('Você não é o responsável por esta partida.');
-}
-
 $stmt = $pdo->prepare("
     SELECT
         p.*,
@@ -70,6 +64,12 @@ $partida = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$partida) {
     http_response_code(404);
     exit('Partida não encontrada.');
+}
+
+// Árbitro só mexe nas partidas em que é o responsável (admin mexe em todas).
+if (!$ehAdmin && (int) ($partida['responsavel_id'] ?? 0) !== $usuarioId) {
+    http_response_code(403);
+    exit('Você não é o responsável por esta partida.');
 }
 
 /*
@@ -389,23 +389,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     if ($acao === 'remover_gol_casa') {
-                        $stmt = $pdo->prepare("
-                            UPDATE partidas
-                            SET placar_casa = GREATEST(placar_casa - 1, 0)
-                            WHERE id = ?
-                        ");
+                        $stmt = $pdo->prepare("UPDATE partidas SET placar_casa = placar_casa - 1 WHERE id = ? AND placar_casa > 0");
                         $descricao = 'Correção: gol removido da equipe da casa.';
                     } else {
-                        $stmt = $pdo->prepare("
-                            UPDATE partidas
-                            SET placar_visitante =
-                                GREATEST(placar_visitante - 1, 0)
-                            WHERE id = ?
-                        ");
+                        $stmt = $pdo->prepare("UPDATE partidas SET placar_visitante = placar_visitante - 1 WHERE id = ? AND placar_visitante > 0");
                         $descricao = 'Correção: gol removido da equipe visitante.';
                     }
 
                     $stmt->execute([$partidaId]);
+
+                    if ($stmt->rowCount() === 0) {
+                        throw new RuntimeException(
+                            'O placar desta equipe já está em 0. Não há gol para remover.'
+                        );
+                    }
 
                     registrarOcorrencia(
                         $pdo,
