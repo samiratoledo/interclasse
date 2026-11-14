@@ -281,13 +281,13 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 </div>
 
 <?php if ($erro !== ''): ?>
-    <div class="notification is-danger is-light">
+    <div class="notification is-danger is-dark">
         <?= escaparRegulamentoAdmin($erro) ?>
     </div>
 <?php endif; ?>
 
 <?php if ($sucesso !== ''): ?>
-    <div class="notification is-success is-light">
+    <div class="notification is-success is-dark">
         <?= escaparRegulamentoAdmin($sucesso) ?>
     </div>
 <?php endif; ?>
@@ -350,7 +350,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </button>
 
             <?php if (!empty($editando['id'])): ?>
-                <a href="regulamento.php" class="button is-light">
+                <a href="regulamento.php" class="button is-dark">
                     Cancelar edição
                 </a>
             <?php endif; ?>
@@ -394,11 +394,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
                             <td>
                                 <?php if ((int) $secao['ativo'] === 1): ?>
-                                    <span class="tag is-success is-light">
+                                    <span class="tag is-success is-dark">
                                         Publicada
                                     </span>
                                 <?php else: ?>
-                                    <span class="tag is-warning is-light">
+                                    <span class="tag is-warning is-dark">
                                         Oculta
                                     </span>
                                 <?php endif; ?>
@@ -417,7 +417,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                 <div class="is-flex is-justify-content-center" style="gap: .5rem;">
 
                                     <a href="regulamento.php?editar=<?= (int) $secao['id'] ?>"
-                                        class="button is-small is-link is-light">
+                                        class="button is-small is-link is-dark">
                                         Editar
                                     </a>
 
@@ -431,7 +431,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
                                         <input type="hidden" name="id" value="<?= (int) $secao['id'] ?>">
 
-                                        <button type="submit" class="button is-small is-danger is-light">
+                                        <button type="submit" class="button is-small is-danger is-dark">
                                             Excluir
                                         </button>
                                     </form>

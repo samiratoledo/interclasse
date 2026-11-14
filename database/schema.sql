@@ -1,13 +1,31 @@
--- =========================================================
--- INTERCLASSE ETEC - BANCO DE DADOS COMPLETO
--- MySQL 8 (InnoDB, utf8mb4)
--- =========================================================
+-- ============================================================
+-- INTERCLASSE ETEC
+-- Script de criação e configuração do banco de dados
+-- SGBD: MySQL 8
+-- Engine: InnoDB
+-- Codificação: utf8mb4
+-- ============================================================
+
+
+-- ============================================================
+-- CONFIGURAÇÃO INICIAL DO BANCO DE DADOS
+-- Cria o banco caso ainda não exista e seleciona sua utilização.
+-- ============================================================
 
 CREATE DATABASE IF NOT EXISTS interclasse_etec
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
 USE interclasse_etec;
+
+
+-- ============================================================
+-- LIMPEZA DO BANCO DE DADOS
+-- Desativa temporariamente a verificação de chaves estrangeiras
+-- para permitir a exclusão das tabelas relacionadas.
+--
+-- ATENÇÃO: este procedimento apaga os dados existentes.
+-- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -27,9 +45,17 @@ DROP TABLE IF EXISTS
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- =========================================================
--- 1. TURMAS
--- =========================================================
+
+-- ============================================================
+-- 1. TABELA: TURMAS
+-- Armazena as turmas participantes do Interclasse.
+--
+-- Cada turma possui:
+-- - Nome e período escolar.
+-- - Caminho da imagem do brasão.
+-- - Indicador de ativação.
+-- ============================================================
+
 CREATE TABLE turmas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(30) NOT NULL UNIQUE,
@@ -39,6 +65,8 @@ CREATE TABLE turmas (
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- Cadastro inicial das turmas participantes.
 INSERT INTO turmas (nome, periodo) VALUES
 ('1º TEC', 'manha'),
 ('2º TEC', 'manha'),
@@ -68,9 +96,19 @@ INSERT INTO turmas (nome, periodo) VALUES
 ('1º LM', 'tarde'),
 ('2º LM', 'tarde');
 
--- =========================================================
--- 2. MODALIDADES
--- =========================================================
+
+-- ============================================================
+-- 2. TABELA: MODALIDADES
+-- Armazena as modalidades esportivas e de jogos eletrônicos.
+--
+-- A categoria identifica o tipo de participação:
+-- masculino, feminino ou misto.
+--
+-- minimo_atletas: quantidade mínima de atletas titulares.
+-- maximo_atletas: limite total de atletas inscritos na equipe,
+-- incluindo titulares e reservas.
+-- ============================================================
+
 CREATE TABLE modalidades (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,
@@ -84,6 +122,8 @@ CREATE TABLE modalidades (
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- Cadastro inicial das modalidades disponíveis no evento.
 INSERT INTO modalidades (nome, descricao, categoria) VALUES
 ('Futsal Masculino', NULL, 'masculino'),
 ('Futsal Feminino', NULL, 'feminino'),
@@ -101,10 +141,22 @@ INSERT INTO modalidades (nome, descricao, categoria) VALUES
 ('Free Fire (E-Games) Misto', 'Modalidade mista de jogos eletrônicos', 'misto'),
 ('Clash Royale (E-Games) Misto', 'Modalidade mista de jogos eletrônicos', 'misto');
 
--- =========================================================
--- 3. USUARIOS
--- Não são criadas contas automaticamente.
--- =========================================================
+
+-- ============================================================
+-- 3. TABELA: USUARIOS
+-- Armazena as contas de acesso ao sistema.
+--
+-- Perfis disponíveis:
+-- - admin: administra o sistema.
+-- - arbitro: controla as partidas autorizadas.
+-- - representante: gerencia os dados da própria turma.
+--
+-- turma_id é utilizado pelos representantes.
+-- Administradores e árbitros podem permanecer sem turma.
+--
+-- Não são criadas contas automaticamente neste script.
+-- ============================================================
+
 CREATE TABLE usuarios (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
@@ -123,9 +175,22 @@ CREATE TABLE usuarios (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 4. ATLETAS
--- =========================================================
+
+-- ============================================================
+-- 4. TABELA: ATLETAS
+-- Armazena os estudantes cadastrados pelas turmas.
+--
+-- O cadastro depende de aprovação administrativa.
+--
+-- status_aprovacao:
+-- - pendente: aguardando análise.
+-- - aprovado: liberado para inscrição.
+-- - rejeitado: cadastro não aprovado.
+--
+-- aprovado_por identifica o administrador responsável
+-- pela análise do cadastro.
+-- ============================================================
+
 CREATE TABLE atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
@@ -148,17 +213,33 @@ CREATE TABLE atletas (
     CONSTRAINT fk_atletas_turma
         FOREIGN KEY (turma_id) REFERENCES turmas(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_atletas_cadastrado_por
         FOREIGN KEY (cadastrado_por) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_atletas_aprovado_por
         FOREIGN KEY (aprovado_por) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 5. INSCRICOES E ATLETAS INSCRITOS
--- =========================================================
+
+-- ============================================================
+-- 5. TABELAS: INSCRICOES E INSCRICAO_ATLETAS
+--
+-- inscricoes:
+-- Registra a inscrição de uma turma em determinada modalidade.
+--
+-- inscricao_atletas:
+-- Relaciona os atletas selecionados com suas inscrições.
+--
+-- A relação entre inscrições e atletas é N:N:
+-- uma inscrição possui vários atletas e um atleta pode
+-- participar de diferentes modalidades.
+--
+-- Cada atleta pode aparecer apenas uma vez na mesma inscrição.
+-- ============================================================
+
 CREATE TABLE inscricoes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     turma_id INT UNSIGNED NOT NULL,
@@ -176,10 +257,12 @@ CREATE TABLE inscricoes (
     CONSTRAINT fk_inscricoes_turma
         FOREIGN KEY (turma_id) REFERENCES turmas(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_inscricoes_modalidade
         FOREIGN KEY (modalidade_id) REFERENCES modalidades(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE inscricao_atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -192,15 +275,30 @@ CREATE TABLE inscricao_atletas (
     CONSTRAINT fk_inscricao_atletas_inscricao
         FOREIGN KEY (inscricao_id) REFERENCES inscricoes(id)
         ON UPDATE CASCADE ON DELETE CASCADE,
+
     CONSTRAINT fk_inscricao_atletas_atleta
         FOREIGN KEY (atleta_id) REFERENCES atletas(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 6. PARTIDAS
--- Permite partidas simultaneas: nao existe bloqueio por horario.
--- =========================================================
+
+-- ============================================================
+-- 6. TABELA: PARTIDAS
+-- Armazena os confrontos entre duas turmas.
+--
+-- Contém:
+-- - Modalidade e equipes participantes.
+-- - Data, horário e local previstos.
+-- - Árbitro ou responsável principal.
+-- - Configurações de duração e quantidade de períodos.
+-- - Placar e horários reais de início e encerramento.
+-- - Situação da partida.
+-- - Informações de transmissão pelo YouTube.
+--
+-- Partidas simultâneas são permitidas.
+-- Não existe restrição de horário entre partidas diferentes.
+-- ============================================================
+
 CREATE TABLE partidas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     modalidade_id INT UNSIGNED NOT NULL,
@@ -242,21 +340,33 @@ CREATE TABLE partidas (
     CONSTRAINT fk_partidas_modalidade
         FOREIGN KEY (modalidade_id) REFERENCES modalidades(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_partidas_turma_casa
         FOREIGN KEY (turma_casa_id) REFERENCES turmas(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_partidas_turma_visitante
         FOREIGN KEY (turma_visitante_id) REFERENCES turmas(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
+
     CONSTRAINT fk_partidas_responsavel
         FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 7. ARBITROS VINCULADOS A CADA PARTIDA
--- Relação N:N: uma partida pode ter mais de um árbitro.
--- =========================================================
+
+-- ============================================================
+-- 7. TABELA: PARTIDAS_ARBITROS
+-- Relaciona os árbitros responsáveis por cada partida.
+--
+-- Relacionamento N:N:
+-- - Uma partida pode possuir vários árbitros.
+-- - Um árbitro pode atuar em várias partidas.
+--
+-- O mesmo árbitro não pode ser vinculado duas vezes
+-- à mesma partida.
+-- ============================================================
+
 CREATE TABLE partidas_arbitros (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     partida_id INT UNSIGNED NOT NULL,
@@ -269,16 +379,31 @@ CREATE TABLE partidas_arbitros (
     CONSTRAINT fk_partidas_arbitros_partida
         FOREIGN KEY (partida_id) REFERENCES partidas(id)
         ON UPDATE CASCADE ON DELETE CASCADE,
+
     CONSTRAINT fk_partidas_arbitros_usuario
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 8. EVENTOS DA PARTIDA
--- atleta_id = autor do evento (gol, ponto, cartao etc.).
--- assistencia_id = atleta que deu a assistencia, quando houver.
--- =========================================================
+
+-- ============================================================
+-- 8. TABELA: EVENTOS_PARTIDA
+-- Registra as ocorrências realizadas durante uma partida.
+--
+-- Exemplos:
+-- - Gols e pontos.
+-- - Assistências.
+-- - Cartões.
+-- - Substituições.
+-- - Correções de placar.
+-- - Ocorrências e alterações do cronômetro.
+--
+-- atleta_id identifica o atleta relacionado ao evento.
+-- assistencia_id identifica o atleta responsável pela assistência,
+-- quando aplicável.
+-- usuario_id identifica quem registrou a ocorrência.
+-- ============================================================
+
 CREATE TABLE eventos_partida (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     partida_id INT UNSIGNED NOT NULL,
@@ -299,20 +424,34 @@ CREATE TABLE eventos_partida (
     CONSTRAINT fk_eventos_partida
         FOREIGN KEY (partida_id) REFERENCES partidas(id)
         ON UPDATE CASCADE ON DELETE CASCADE,
+
     CONSTRAINT fk_eventos_usuario
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE SET NULL,
+
     CONSTRAINT fk_eventos_atleta
         FOREIGN KEY (atleta_id) REFERENCES atletas(id)
         ON UPDATE CASCADE ON DELETE SET NULL,
+
     CONSTRAINT fk_eventos_assistencia
         FOREIGN KEY (assistencia_id) REFERENCES atletas(id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 9. ESTADO DO CRONOMETRO
--- =========================================================
+
+-- ============================================================
+-- 9. TABELA: ESTADO_PARTIDA
+-- Armazena o estado atual do cronômetro de cada partida.
+--
+-- Permite controlar:
+-- - Período atual.
+-- - Tempo acumulado.
+-- - Momento em que o cronômetro foi iniciado.
+-- - Fase atual: jogo, intervalo ou encerrado.
+--
+-- Cada partida possui apenas um registro de estado.
+-- ============================================================
+
 CREATE TABLE estado_partida (
     partida_id INT UNSIGNED NOT NULL,
     periodo_atual TINYINT UNSIGNED NOT NULL DEFAULT 1,
@@ -329,11 +468,22 @@ CREATE TABLE estado_partida (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 10. REGULAMENTOS
--- Cada assunto fica em uma secao independente, com titulo,
--- conteudo, ordem e ativacao. Nao consolidar em documento unico.
--- =========================================================
+
+-- ============================================================
+-- 10. TABELA: REGULAMENTOS
+-- Armazena as seções do regulamento do Interclasse.
+--
+-- Cada seção possui:
+-- - Identificador e endereço amigável (slug).
+-- - Título e conteúdo.
+-- - Ordem de exibição.
+-- - Indicador de ativação.
+-- - Administrador responsável pela última atualização.
+--
+-- As seções são independentes para permitir edição e
+-- organização individual, sem consolidar tudo em um documento.
+-- ============================================================
+
 CREATE TABLE regulamentos (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     slug VARCHAR(100) NOT NULL,
@@ -354,6 +504,8 @@ CREATE TABLE regulamentos (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- Cadastro inicial das seções do regulamento.
 INSERT INTO regulamentos (slug, titulo, conteudo, ordem) VALUES
 ('apresentacao', 'Apresentação', 'INTERCLASSE CULTURA DE PAZ
 
@@ -520,11 +672,25 @@ Comissão de esportes: Atlética da Zona Leste.
 
 As atribuições incluem supervisionar o evento, resolver conflitos, organizar as modalidades e atuar na arbitragem, conforme a modalidade e a necessidade de acompanhamento dos professores.', 21);
 
--- =========================================================
--- 11. HISTORICO DOS REGULAMENTOS
--- ON DELETE RESTRICT impede apagar uma secao que tenha historico.
--- Para retirar uma secao da pagina publica, use ativo = 0.
--- =========================================================
+
+-- ============================================================
+-- 11. TABELA: HISTORICO_REGULAMENTOS
+-- Armazena versões anteriores e registros de alterações
+-- realizadas nas seções do regulamento.
+--
+-- Cada registro preserva:
+-- - Seção relacionada.
+-- - Usuário responsável pela alteração.
+-- - Número da versão.
+-- - Tipo de ação realizada.
+-- - Título e conteúdo registrados naquele momento.
+--
+-- ON DELETE RESTRICT impede excluir uma seção que possua
+-- histórico associado.
+--
+-- Para ocultar uma seção da página pública, utilize ativo = 0.
+-- ============================================================
+
 CREATE TABLE historico_regulamentos (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     regulamento_id INT UNSIGNED NOT NULL,
@@ -542,18 +708,74 @@ CREATE TABLE historico_regulamentos (
     CONSTRAINT fk_historico_regulamento
         FOREIGN KEY (regulamento_id) REFERENCES regulamentos(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
+
     CONSTRAINT fk_historico_usuario
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =========================================================
--- 12. CONFERENCIA
--- =========================================================
+
+-- ============================================================
+-- 12. TABELA: PARTIDAS_ATLETAS
+-- Relaciona os atletas selecionados para cada partida.
+--
+-- Permite controlar:
+-- - Quais atletas fazem parte do elenco da partida.
+-- - A função inicial de cada atleta: titular ou reserva.
+-- - A situação atual: em campo, reserva ou substituído.
+--
+-- A restrição UNIQUE impede cadastrar o mesmo atleta
+-- duas vezes na mesma partida.
+--
+-- Esta tabela deve ser criada depois de partidas e atletas,
+-- pois depende das duas tabelas por meio de chaves estrangeiras.
+-- ============================================================
+
+CREATE TABLE partidas_atletas (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    partida_id INT UNSIGNED NOT NULL,
+    atleta_id INT UNSIGNED NOT NULL,
+
+    funcao_inicial ENUM('titular', 'reserva')
+        NOT NULL DEFAULT 'reserva',
+
+    situacao_atual ENUM('em_campo', 'reserva', 'substituido')
+        NOT NULL DEFAULT 'reserva',
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_partida_atleta (partida_id, atleta_id),
+    INDEX idx_partidas_atletas_atleta (atleta_id),
+
+    CONSTRAINT fk_partidas_atletas_partida
+        FOREIGN KEY (partida_id) REFERENCES partidas(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+
+    CONSTRAINT fk_partidas_atletas_atleta
+        FOREIGN KEY (atleta_id) REFERENCES atletas(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================
+-- 13. CONSULTAS DE CONFERÊNCIA
+-- Consultas para verificar a criação das tabelas e os registros
+-- iniciais inseridos no banco de dados.
+-- ============================================================
+
 SHOW TABLES;
 
+-- Consulta todas as turmas, organizadas por período e ID.
 SELECT * FROM turmas ORDER BY periodo, id;
+
+-- Consulta todas as modalidades cadastradas.
 SELECT * FROM modalidades ORDER BY id;
-SELECT id, nome, usuario_login, perfil, turma_id, ativo FROM usuarios;
-SELECT id, titulo, slug, ordem, ativo FROM regulamentos ORDER BY ordem;
-SELECT * FROM usuarios;
+
+-- Consulta as contas de usuário e seus respectivos perfis.
+SELECT id, nome, usuario_login, perfil, turma_id, ativo
+FROM usuarios;
+
+-- Consulta as seções do regulamento e sua ordem de exibição.
+SELECT id, titulo, slug, ordem, ativo
+FROM regulamentos
+ORDER BY ordem;

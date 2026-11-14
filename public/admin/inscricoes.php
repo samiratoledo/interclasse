@@ -197,13 +197,13 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 </div>
 
 <?php if ($erro !== ''): ?>
-    <div class="notification is-danger is-light">
+    <div class="notification is-danger is-dark">
         <?= escaparInscricaoAdmin($erro) ?>
     </div>
 <?php endif; ?>
 
 <?php if ($sucesso !== ''): ?>
-    <div class="notification is-success is-light">
+    <div class="notification is-success is-dark">
         <?= escaparInscricaoAdmin($sucesso) ?>
     </div>
 <?php endif; ?>
@@ -296,7 +296,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
                                 <span class="tag <?= $inscricao['status'] === 'aprovada'
                                     ? 'is-success'
-                                    : ($inscricao['status'] === 'pendente' ? 'is-warning' : 'is-light') ?>">
+                                    : ($inscricao['status'] === 'pendente' ? 'is-warning' : 'is-dark') ?>">
                                     <?= escaparInscricaoAdmin(
                                         $rotulos[$inscricao['status']] ?? $inscricao['status']
                                     ) ?>
@@ -325,7 +325,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                                    value="<?= (int) $inscricao['id'] ?>">
                                             <input type="hidden" name="acao" value="rejeitar">
 
-                                            <button class="button is-danger is-light is-small" type="submit">
+                                            <button class="button is-danger is-dark is-small" type="submit">
                                                 Rejeitar
                                             </button>
                                         </form>

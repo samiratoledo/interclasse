@@ -263,7 +263,8 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 <a href="<?= $baseUrl ?>/public/admin/inscricoes.php">Inscrições</a>
                 <a href="<?= $baseUrl ?>/public/admin/aprovar-atletas.php">Aprovar atletas</a>
                 <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
-                <a href="<?= $baseUrl ?>/public/arbitro/index.php">Minhas partidas</a>
+                <a href="<?= $baseUrl ?>/public/admin/arbitros.php">Árbitros</a>
+                <a href="<?= $baseUrl ?>/public/admin/partidas.php">Minhas partidas</a>
 
                 <form action="<?= $baseUrl ?>/public/logout.php" method="POST" class="logout-form">
 
