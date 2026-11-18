@@ -24,42 +24,6 @@ if (!$partidaId || $partidaId < 1) {
     exit('Partida inválida.');
 }
 
-$stmt = $pdo->prepare("
-    SELECT
-        p.*,
-        m.nome AS modalidade_nome,
-        m.minimo_atletas,
-        m.maximo_atletas,
-        tc.nome AS turma_casa_nome,
-        tv.nome AS turma_visitante_nome
-    FROM partidas p
-    INNER JOIN modalidades m ON m.id = p.modalidade_id
-    INNER JOIN turmas tc ON tc.id = p.turma_casa_id
-    INNER JOIN turmas tv ON tv.id = p.turma_visitante_id
-    WHERE p.id = ?
-    LIMIT 1
-");
-
-$stmt->execute([$partidaId]);
-$partida = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$partida) {
-    http_response_code(404);
-    exit('Partida não encontrada.');
-}
-
-if (!$ehAdmin && (int) ($partida['responsavel_id'] ?? 0) !== $usuarioId) {
-    http_response_code(403);
-    exit('Você não é o responsável por esta partida.');
-}
-
-if (empty($_SESSION['csrf_partida_arbitro'])) {
-    $_SESSION['csrf_partida_arbitro'] = bin2hex(random_bytes(32));
-}
-
-$csrf = $_SESSION['csrf_partida_arbitro'];
-$erro = '';
-
 function escapar(mixed $valor): string
 {
     return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
@@ -121,6 +85,42 @@ function registrarOcorrencia(
         $tempoSegundos
     ]);
 }
+
+$stmt = $pdo->prepare("
+    SELECT
+        p.*,
+        m.nome AS modalidade_nome,
+        m.minimo_atletas,
+        m.maximo_atletas,
+        tc.nome AS turma_casa_nome,
+        tv.nome AS turma_visitante_nome
+    FROM partidas p
+    INNER JOIN modalidades m ON m.id = p.modalidade_id
+    INNER JOIN turmas tc ON tc.id = p.turma_casa_id
+    INNER JOIN turmas tv ON tv.id = p.turma_visitante_id
+    WHERE p.id = ?
+    LIMIT 1
+");
+
+$stmt->execute([$partidaId]);
+$partida = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$partida) {
+    http_response_code(404);
+    exit('Partida não encontrada.');
+}
+
+if (!$ehAdmin && (int) ($partida['responsavel_id'] ?? 0) !== $usuarioId) {
+    http_response_code(403);
+    exit('Você não é o responsável por esta partida.');
+}
+
+if (empty($_SESSION['csrf_partida_arbitro'])) {
+    $_SESSION['csrf_partida_arbitro'] = bin2hex(random_bytes(32));
+}
+
+$csrf = $_SESSION['csrf_partida_arbitro'];
+$erro = '';
 
 $stmt = $pdo->prepare("
     INSERT IGNORE INTO estado_partida (partida_id)
@@ -199,61 +199,134 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Gols e cartões por jogador
+                | Registro dinâmico de eventos da modalidade
                 |--------------------------------------------------------------------------
                 */
 
-                case 'gol_atleta':
-                case 'cartao_amarelo':
-                case 'cartao_vermelho':
+                case 'registrar_evento':
 
-                    if ($fase === 'encerrado') {
+                    if ($fase === 'encerrado' || $partidaAtual['status'] === 'encerrada') {
                         throw new RuntimeException('A partida já foi encerrada.');
                     }
 
-                    $atletaId = filter_var(
-                        $_POST['atleta_id'] ?? null,
+                    $tipoEvento = trim((string) ($_POST['tipo_evento'] ?? ''));
+
+                    $equipeId = filter_var(
+                        $_POST['equipe_id'] ?? null,
                         FILTER_VALIDATE_INT
                     );
 
-                    if (!$atletaId || $atletaId < 1) {
-                        throw new RuntimeException('Jogador inválido.');
+                    $atletaIdRecebido = $_POST['atleta_id'] ?? '';
+                    $assistenciaRecebida = $_POST['assistencia_id'] ?? '';
+
+                    if ($tipoEvento === '') {
+                        throw new RuntimeException('Selecione um evento.');
                     }
 
+                    if (
+                        !$equipeId ||
+                        !in_array((int) $equipeId, [
+                            (int) $partidaAtual['turma_casa_id'],
+                            (int) $partidaAtual['turma_visitante_id']
+                        ], true)
+                    ) {
+                        throw new RuntimeException('Selecione uma equipe válida.');
+                    }
+
+                    /*
+                     * Busca a configuração do evento para esta modalidade.
+                     */
                     $stmt = $pdo->prepare("
-                        SELECT a.id, a.nome, a.turma_id
-                        FROM atletas a
-                        INNER JOIN inscricao_atletas ia ON ia.atleta_id = a.id
-                        INNER JOIN inscricoes i ON i.id = ia.inscricao_id
-                        WHERE a.id = ?
-                          AND i.modalidade_id = ?
-                          AND i.status = 'aprovada'
-                          AND i.turma_id IN (?, ?)
-                          AND a.status_aprovacao = 'aprovado'
-                          AND a.ativo = 1
+                        SELECT
+                            tipo_evento,
+                            nome,
+                            pontos_placar,
+                            exige_atleta,
+                            permite_assistencia
+                        FROM eventos_modalidade
+                        WHERE modalidade_id = ?
+                          AND tipo_evento = ?
+                          AND ativo = 1
                         LIMIT 1
                     ");
 
                     $stmt->execute([
-                        $atletaId,
                         $partidaAtual['modalidade_id'],
-                        $partidaAtual['turma_casa_id'],
-                        $partidaAtual['turma_visitante_id']
+                        $tipoEvento
                     ]);
 
-                    $atleta = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $configEvento = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    if (!$atleta) {
-                        throw new RuntimeException('Jogador não aprovado ou não inscrito nesta partida.');
+                    if (!$configEvento) {
+                        throw new RuntimeException('Este evento não está disponível para a modalidade.');
                     }
 
-                    if ($acao === 'gol_atleta') {
+                    $atleta = null;
+                    $assistencia = null;
+                    $atletaId = null;
+                    $assistenciaId = null;
 
-                        $assistenciaId = null;
-                        $assistenciaNome = null;
-                        $assistenciaRecebida = $_POST['assistencia_id'] ?? '';
+                    /*
+                     * Validação do atleta, quando obrigatório.
+                     */
+                    if ((int) $configEvento['exige_atleta'] === 1) {
+
+                        $atletaId = filter_var(
+                            $atletaIdRecebido,
+                            FILTER_VALIDATE_INT
+                        );
+
+                        if (!$atletaId || $atletaId < 1) {
+                            throw new RuntimeException('Selecione o jogador relacionado ao evento.');
+                        }
+
+                        $stmt = $pdo->prepare("
+                            SELECT
+                                a.id,
+                                a.nome,
+                                a.turma_id
+                            FROM atletas a
+                            INNER JOIN inscricao_atletas ia ON ia.atleta_id = a.id
+                            INNER JOIN inscricoes i ON i.id = ia.inscricao_id
+                            INNER JOIN partidas_atletas pa
+                                ON pa.atleta_id = a.id
+                                AND pa.partida_id = ?
+                            WHERE a.id = ?
+                              AND a.turma_id = ?
+                              AND i.modalidade_id = ?
+                              AND i.turma_id = ?
+                              AND i.status = 'aprovada'
+                              AND a.status_aprovacao = 'aprovado'
+                              AND a.ativo = 1
+                              AND pa.situacao_atual = 'em_campo'
+                            LIMIT 1
+                        ");
+
+                        $stmt->execute([
+                            $partidaId,
+                            $atletaId,
+                            $equipeId,
+                            $partidaAtual['modalidade_id'],
+                            $equipeId
+                        ]);
+
+                        $atleta = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                        if (!$atleta) {
+                            throw new RuntimeException('O jogador selecionado não está em campo ou não pertence à equipe.');
+                        }
+                    }
+
+                    /*
+                     * Validação da assistência, quando permitida.
+                     */
+                    if ((int) $configEvento['permite_assistencia'] === 1) {
 
                         if ($assistenciaRecebida !== '') {
+
+                            if (!$atleta) {
+                                throw new RuntimeException('O evento precisa ter um jogador para registrar assistência.');
+                            }
 
                             $assistenciaId = filter_var(
                                 $assistenciaRecebida,
@@ -265,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $assistenciaId < 1 ||
                                 $assistenciaId === (int) $atleta['id']
                             ) {
-                                throw new RuntimeException('Jogador da assistência inválido.');
+                                throw new RuntimeException('Selecione um jogador válido para a assistência.');
                             }
 
                             $stmt = $pdo->prepare("
@@ -273,6 +346,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 FROM atletas a
                                 INNER JOIN inscricao_atletas ia ON ia.atleta_id = a.id
                                 INNER JOIN inscricoes i ON i.id = ia.inscricao_id
+                                INNER JOIN partidas_atletas pa
+                                    ON pa.atleta_id = a.id
+                                    AND pa.partida_id = ?
                                 WHERE a.id = ?
                                   AND a.turma_id = ?
                                   AND i.modalidade_id = ?
@@ -280,85 +356,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                   AND i.status = 'aprovada'
                                   AND a.status_aprovacao = 'aprovado'
                                   AND a.ativo = 1
+                                  AND pa.situacao_atual = 'em_campo'
                                 LIMIT 1
                             ");
 
                             $stmt->execute([
+                                $partidaId,
                                 $assistenciaId,
-                                $atleta['turma_id'],
+                                $equipeId,
                                 $partidaAtual['modalidade_id'],
-                                $atleta['turma_id']
+                                $equipeId
                             ]);
 
                             $assistencia = $stmt->fetch(PDO::FETCH_ASSOC);
 
                             if (!$assistencia) {
-                                throw new RuntimeException('O jogador da assistência não pertence à equipe.');
+                                throw new RuntimeException('O jogador da assistência precisa pertencer à mesma equipe e estar em campo.');
                             }
-
-                            $assistenciaNome = $assistencia['nome'];
                         }
-
-                        if ((int) $atleta['turma_id'] === (int) $partidaAtual['turma_casa_id']) {
-                            $stmt = $pdo->prepare("
-                                UPDATE partidas
-                                SET placar_casa = placar_casa + 1
-                                WHERE id = ?
-                            ");
-                        } else {
-                            $stmt = $pdo->prepare("
-                                UPDATE partidas
-                                SET placar_visitante = placar_visitante + 1
-                                WHERE id = ?
-                            ");
-                        }
-
-                        $stmt->execute([$partidaId]);
-
-                        $descricao = 'Gol de ' . $atleta['nome'];
-
-                        if ($assistenciaNome !== null) {
-                            $descricao .= ', assistência de ' . $assistenciaNome;
-                        }
-
-                        registrarOcorrencia(
-                            $pdo,
-                            $partidaId,
-                            $usuarioId,
-                            'gol',
-                            $descricao . '.',
-                            $novoPeriodo,
-                            $segundos,
-                            (int) $atleta['id'],
-                            $assistenciaId
-                        );
-
-                    } elseif ($acao === 'cartao_amarelo') {
-
-                        registrarOcorrencia(
-                            $pdo,
-                            $partidaId,
-                            $usuarioId,
-                            'cartao_amarelo',
-                            'Cartão amarelo para ' . $atleta['nome'] . '.',
-                            $novoPeriodo,
-                            $segundos,
-                            (int) $atleta['id']
-                        );
-
-                    } else {
-
-                        registrarOcorrencia(
-                            $pdo,
-                            $partidaId,
-                            $usuarioId,
-                            'cartao_vermelho',
-                            'Cartão vermelho para ' . $atleta['nome'] . '.',
-                            $novoPeriodo,
-                            $segundos,
-                            (int) $atleta['id']
-                        );
+                    } elseif ($assistenciaRecebida !== '') {
+                        throw new RuntimeException('Este evento não permite assistência.');
                     }
+
+                    /*
+                     * Atualização do placar conforme a configuração.
+                     */
+                    $pontos = (int) $configEvento['pontos_placar'];
+
+                    if ($pontos !== 0) {
+
+                        if ((int) $equipeId === (int) $partidaAtual['turma_casa_id']) {
+
+                            $stmt = $pdo->prepare("
+                                UPDATE partidas
+                                SET placar_casa = GREATEST(0, placar_casa + ?)
+                                WHERE id = ?
+                            ");
+
+                        } else {
+
+                            $stmt = $pdo->prepare("
+                                UPDATE partidas
+                                SET placar_visitante = GREATEST(0, placar_visitante + ?)
+                                WHERE id = ?
+                            ");
+                        }
+
+                        $stmt->execute([$pontos, $partidaId]);
+                    }
+
+                    $nomeEquipe = (int) $equipeId === (int) $partidaAtual['turma_casa_id']
+                        ? $partidaAtual['turma_casa_nome']
+                        : $partidaAtual['turma_visitante_nome'];
+
+                    $descricao = $nomeEquipe;
+
+                    if ($atleta) {
+                        $descricao .= $atleta['nome'];
+                    }
+
+                    if ($assistencia) {
+                        $descricao .= ' (assistência: ' . $assistencia['nome'] . ')';
+                    }
+
+                    if ($pontos !== 0) {
+                        $descricao .= ' (' . ($pontos > 0 ? '+' : '') . $pontos . ' no placar)';
+                    }
+
+                    registrarOcorrencia(
+                        $pdo,
+                        $partidaId,
+                        $usuarioId,
+                        $tipoEvento,
+                        $descricao . '.',
+                        $novoPeriodo,
+                        $segundos,
+                        $atleta ? (int) $atleta['id'] : null,
+                        $assistencia ? (int) $assistencia['id'] : null
+                    );
 
                     break;
 
@@ -769,46 +844,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Gols manuais
+                | Correção manual do placar
                 |--------------------------------------------------------------------------
                 */
-
-                case 'gol_casa':
-                case 'gol_visitante':
-
-                    if ($fase === 'encerrado') {
-                        throw new RuntimeException('Não é possível alterar o placar após o encerramento.');
-                    }
-
-                    if ($acao === 'gol_casa') {
-
-                        $stmt = $pdo->prepare("
-                            UPDATE partidas
-                            SET placar_casa = placar_casa + 1
-                            WHERE id = ?
-                        ");
-
-                        $descricao = 'Gol do ' . $partidaAtual['turma_casa_nome'] . '.';
-
-                    } else {
-
-                        $stmt = $pdo->prepare("
-                            UPDATE partidas
-                            SET placar_visitante = placar_visitante + 1
-                            WHERE id = ?
-                        ");
-
-                        $descricao = 'Gol do ' . $partidaAtual['turma_visitante_nome'] . '.';
-                    }
-
-                    $stmt->execute([$partidaId]);
-
-                    registrarOcorrencia(
-                        $pdo, $partidaId, $usuarioId,
-                        'gol', $descricao, $novoPeriodo, $segundos
-                    );
-
-                    break;
 
                 case 'remover_gol_casa':
                 case 'remover_gol_visitante':
@@ -825,7 +863,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id = ? AND placar_casa > 0
                         ");
 
-                        $descricao = 'Correção: gol removido do ' . $partidaAtual['turma_casa_nome'] . '.';
+                        $descricao = 'Correção: ponto removido do ' . $partidaAtual['turma_casa_nome'] . '.';
 
                     } else {
 
@@ -835,13 +873,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             WHERE id = ? AND placar_visitante > 0
                         ");
 
-                        $descricao = 'Correção: gol removido do ' . $partidaAtual['turma_visitante_nome'] . '.';
+                        $descricao = 'Correção: ponto removido do ' . $partidaAtual['turma_visitante_nome'] . '.';
                     }
 
                     $stmt->execute([$partidaId]);
 
                     if ($stmt->rowCount() === 0) {
-                        throw new RuntimeException('O placar já está em 0. Não há gol para remover.');
+                        throw new RuntimeException('O placar já está em 0. Não há ponto para remover.');
                     }
 
                     registrarOcorrencia(
@@ -1007,6 +1045,29 @@ if (!$partida) {
     exit('Partida não encontrada.');
 }
 
+/*
+|--------------------------------------------------------------------------
+| Eventos disponíveis para a modalidade
+|--------------------------------------------------------------------------
+*/
+
+$stmt = $pdo->prepare("
+    SELECT
+        tipo_evento,
+        nome,
+        pontos_placar,
+        exige_atleta,
+        permite_assistencia,
+        ordem
+    FROM eventos_modalidade
+    WHERE modalidade_id = ?
+      AND ativo = 1
+    ORDER BY ordem, nome
+");
+
+$stmt->execute([$partida['modalidade_id']]);
+$eventosModalidade = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 $segundosExibidos = (int) $estado['segundos_acumulados'];
 
 if ($estado['cronometro_iniciado_em'] !== null) {
@@ -1102,7 +1163,6 @@ if ($ehAdmin) {
     require_once __DIR__ . '/../../includes/arbitro/header.php';
 }
 ?>
-
 
 <style>
 .painel {
@@ -1232,38 +1292,6 @@ if ($ehAdmin) {
 
 .painel .jogador-identificacao strong { color: #0B2948; }
 
-.painel .jogador-acoes {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-}
-
-.painel .jogador-acoes form { margin: 0; }
-
-.painel .form-gol {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.painel .form-gol .select select {
-    max-width: 175px;
-    font-size: .75rem;
-}
-
-.painel .botao-amarelo {
-    background: #F2C94C;
-    color: #493600;
-    border: none;
-}
-
-.painel .botao-vermelho {
-    background: #D94B4B;
-    color: #fff;
-    border: none;
-}
-
 .painel .select-branco select,
 .painel .select-branco select option {
     background: #fff;
@@ -1286,6 +1314,21 @@ if ($ehAdmin) {
 .painel .situacao-em-campo { color: #23865B; }
 .painel .situacao-reserva { color: #3273A8; }
 .painel .situacao-substituido { color: #8A94A3; }
+
+.painel .registro-evento {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.painel .info-evento {
+    background: #F4F7FB;
+    border: 1px solid #E1E8F0;
+    border-radius: 9px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    color: #52647A;
+    font-size: .9rem;
+}
 
 @media (max-width: 600px) {
     .painel {
@@ -1315,23 +1358,6 @@ if ($ehAdmin) {
     .painel .jogador-linha {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .painel .jogador-acoes {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .painel .form-gol {
-        flex: 1;
-        min-width: 100%;
-    }
-
-    .painel .form-gol .select { flex: 1; }
-
-    .painel .form-gol .select select {
-        max-width: none;
-        width: 100%;
     }
 }
 </style>
@@ -1364,7 +1390,7 @@ if ($ehAdmin) {
         <?php endif; ?>
     </div>
 
-    <!-- Configuração do elenco -->
+    <!-- Configuração do elenco: mantida em formato de lista -->
 
     <?php if ($partida['status'] === 'agendada' && $partida['inicio_real'] === null): ?>
 
@@ -1420,9 +1446,7 @@ if ($ehAdmin) {
                                     <div class="select is-fullwidth select-branco">
                                         <select name="elenco[<?= (int) $atleta['id'] ?>]">
 
-                                            <option value="">
-                                                Não selecionado
-                                            </option>
+                                            <option value="">Não selecionado</option>
 
                                             <option
                                                 value="titular"
@@ -1459,14 +1483,14 @@ if ($ehAdmin) {
 
     <?php endif; ?>
 
-    <!-- Jogadores e ações -->
+    <!-- Jogadores: somente lista e situação, sem botões de ações -->
 
     <div class="cartao">
 
-        <h2 class="title is-4">Jogadores e ações</h2>
+        <h2 class="title is-4">Jogadores da partida</h2>
 
         <p class="has-text-grey mb-4">
-            Registre gols, assistências, cartões e substituições.
+            Confira os atletas selecionados e a situação de cada um.
         </p>
 
         <div class="columns">
@@ -1533,75 +1557,13 @@ if ($ehAdmin) {
 
                                 </div>
 
-                                <?php if ($atleta['situacao_atual'] === 'em_campo' && !$encerrada): ?>
-
-                                    <div class="jogador-acoes">
-
-                                        <form method="post" class="form-gol">
-
-                                            <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                                            <input type="hidden" name="acao" value="gol_atleta">
-                                            <input type="hidden" name="atleta_id" value="<?= (int) $atleta['id'] ?>">
-
-                                            <div class="select is-small select-branco">
-                                                <select name="assistencia_id">
-                                                    <option value="">Sem assistência</option>
-
-                                                    <?php foreach ($atletasDaEquipe as $colega): ?>
-
-                                                        <?php if (
-                                                            (int) $colega['id'] === (int) $atleta['id'] ||
-                                                            $colega['situacao_atual'] === 'substituido'
-                                                        ) {
-                                                            continue;
-                                                        } ?>
-
-                                                        <option value="<?= (int) $colega['id'] ?>">
-                                                            Assistência: <?= escapar($colega['nome']) ?>
-                                                        </option>
-
-                                                    <?php endforeach; ?>
-
-                                                </select>
-                                            </div>
-
-                                            <button type="submit" class="button is-small is-success" title="Registrar gol">
-                                                ⚽
-                                            </button>
-
-                                        </form>
-
-                                        <form method="post">
-                                            <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                                            <input type="hidden" name="acao" value="cartao_amarelo">
-                                            <input type="hidden" name="atleta_id" value="<?= (int) $atleta['id'] ?>">
-
-                                            <button type="submit" class="button is-small botao-amarelo" title="Cartão amarelo">
-                                                🟨
-                                            </button>
-                                        </form>
-
-                                        <form method="post">
-                                            <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                                            <input type="hidden" name="acao" value="cartao_vermelho">
-                                            <input type="hidden" name="atleta_id" value="<?= (int) $atleta['id'] ?>">
-
-                                            <button type="submit" class="button is-small botao-vermelho" title="Cartão vermelho">
-                                                🟥
-                                            </button>
-                                        </form>
-
-                                    </div>
-
-                                <?php endif; ?>
-
                             </div>
 
                         <?php endforeach; ?>
 
                     <?php endif; ?>
 
-                    <!-- Botão de substituição -->
+                    <!-- Substituição -->
 
                     <?php if (
                         $partida['inicio_real'] !== null &&
@@ -1623,16 +1585,18 @@ if ($ehAdmin) {
 
                         <?php if (!empty($emCampo) && !empty($reservas)): ?>
 
+                            <?php $idSubstituicao = 'substituicao-' . (int) $equipe['atletas'][0]['turma_id']; ?>
+
                             <button
                                 type="button"
                                 class="button is-info is-light is-fullwidth mt-3"
-                                onclick="abrirSubstituicao('substituicao-<?= (int) $equipe['atletas'][0]['turma_id'] ?>')"
+                                onclick="abrirSubstituicao('<?= escapar($idSubstituicao) ?>')"
                             >
                                 🔄 Substituir jogador
                             </button>
 
                             <div
-                                id="substituicao-<?= (int) $equipe['atletas'][0]['turma_id'] ?>"
+                                id="<?= escapar($idSubstituicao) ?>"
                                 class="box mt-3"
                                 hidden
                             >
@@ -1648,9 +1612,7 @@ if ($ehAdmin) {
 
                                     <div class="field">
 
-                                        <label class="label">
-                                            Jogador que vai sair
-                                        </label>
+                                        <label class="label">Jogador que vai sair</label>
 
                                         <div class="select is-fullwidth select-branco">
                                             <select name="atleta_sai_id" required>
@@ -1672,9 +1634,7 @@ if ($ehAdmin) {
 
                                     <div class="field">
 
-                                        <label class="label">
-                                            Jogador que vai entrar
-                                        </label>
+                                        <label class="label">Jogador que vai entrar</label>
 
                                         <div class="select is-fullwidth select-branco">
                                             <select name="atleta_entra_id" required>
@@ -1703,7 +1663,7 @@ if ($ehAdmin) {
                                         <button
                                             type="button"
                                             class="button is-light"
-                                            onclick="fecharSubstituicao('substituicao-<?= (int) $equipe['atletas'][0]['turma_id'] ?>')"
+                                            onclick="fecharSubstituicao('<?= escapar($idSubstituicao) ?>')"
                                         >
                                             Cancelar
                                         </button>
@@ -1739,24 +1699,6 @@ if ($ehAdmin) {
                     <?= (int) $partida['placar_casa'] ?>
                 </div>
 
-                <form method="post" class="mt-3">
-                    <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                    <input type="hidden" name="acao" value="gol_casa">
-
-                    <button class="button is-success is-medium" <?= $encerrada ? 'disabled' : '' ?>>
-                        + Gol
-                    </button>
-                </form>
-
-                <form method="post" class="mt-2">
-                    <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                    <input type="hidden" name="acao" value="remover_gol_casa">
-
-                    <button class="button is-light is-small" <?= $encerrada ? 'disabled' : '' ?>>
-                        − Corrigir gol
-                    </button>
-                </form>
-
             </div>
 
             <div class="column is-narrow">
@@ -1772,30 +1714,184 @@ if ($ehAdmin) {
                     <?= (int) $partida['placar_visitante'] ?>
                 </div>
 
-                <form method="post" class="mt-3">
-                    <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                    <input type="hidden" name="acao" value="gol_visitante">
-
-                    <button class="button is-success is-medium" <?= $encerrada ? 'disabled' : '' ?>>
-                        + Gol
-                    </button>
-                </form>
-
-                <form method="post" class="mt-2">
-                    <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
-                    <input type="hidden" name="acao" value="remover_gol_visitante">
-
-                    <button class="button is-light is-small" <?= $encerrada ? 'disabled' : '' ?>>
-                        − Corrigir gol
-                    </button>
-                </form>
-
             </div>
 
         </div>
     </div>
 
-    <!-- Cronômetro -->
+    <!-- Registro centralizado de eventos -->
+
+    <?php if (!$encerrada): ?>
+
+        <div class="cartao">
+
+            <div class="registro-evento">
+
+                <h2 class="title is-4">Registrar evento</h2>
+
+                <p class="has-text-grey mb-4">
+                    Selecione a equipe e a ação que deseja registrar na partida.
+                </p>
+
+                <?php if (empty($eventosModalidade)): ?>
+
+                    <div class="notification is-warning is-light">
+                        Nenhum evento está cadastrado para esta modalidade.
+                        Configure os eventos na tabela
+                        <strong>eventos_modalidade</strong>.
+                    </div>
+
+                <?php else: ?>
+
+                    <form method="post" id="formRegistroEvento">
+
+                        <input type="hidden" name="csrf_token" value="<?= escapar($csrf) ?>">
+                        <input type="hidden" name="acao" value="registrar_evento">
+
+                        <div class="field">
+
+                            <label class="label" for="equipeEvento">
+                                Equipe
+                            </label>
+
+                            <div class="select is-fullwidth select-branco">
+                                <select name="equipe_id" id="equipeEvento" required>
+                                    <option value="">Selecione a equipe</option>
+                                    <option value="<?= (int) $partida['turma_casa_id'] ?>">
+                                        <?= escapar($nomeCasa) ?>
+                                    </option>
+                                    <option value="<?= (int) $partida['turma_visitante_id'] ?>">
+                                        <?= escapar($nomeVisitante) ?>
+                                    </option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label class="label" for="tipoEvento">
+                                Evento
+                            </label>
+
+                            <div class="select is-fullwidth select-branco">
+                                <select name="tipo_evento" id="tipoEvento" required>
+                                    <option value="">Selecione o evento</option>
+
+                                    <?php foreach ($eventosModalidade as $evento): ?>
+
+                                        <option
+                                            value="<?= escapar($evento['tipo_evento']) ?>"
+                                            data-exige-atleta="<?= (int) $evento['exige_atleta'] ?>"
+                                            data-permite-assistencia="<?= (int) $evento['permite_assistencia'] ?>"
+                                            data-pontos="<?= (int) $evento['pontos_placar'] ?>"
+                                        >
+                                            <?= escapar($evento['nome']) ?>
+                                            <?php if ((int) $evento['pontos_placar'] !== 0): ?>
+                                                (<?= (int) $evento['pontos_placar'] > 0 ? '+' : '' ?><?= (int) $evento['pontos_placar'] ?> no placar)
+                                            <?php endif; ?>
+                                        </option>
+
+                                    <?php endforeach; ?>
+
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="field" id="campoAtleta" hidden>
+
+                            <label class="label" for="atletaEvento">
+                                Jogador
+                            </label>
+
+                            <div class="select is-fullwidth select-branco">
+                                <select name="atleta_id" id="atletaEvento">
+                                    <option value="">Selecione o jogador</option>
+
+                                    <?php foreach ($atletasDisponiveis as $atleta): ?>
+
+                                        <?php if (
+                                            $atleta['funcao_inicial'] === null ||
+                                            $atleta['situacao_atual'] !== 'em_campo'
+                                        ) {
+                                            continue;
+                                        } ?>
+
+                                        <option
+                                            value="<?= (int) $atleta['id'] ?>"
+                                            data-equipe="<?= (int) $atleta['turma_id'] ?>"
+                                        >
+                                            <?= escapar($atleta['nome']) ?>
+                                            <?php if ($atleta['numero_camisa'] !== null): ?>
+                                                — #<?= (int) $atleta['numero_camisa'] ?>
+                                            <?php endif; ?>
+                                        </option>
+
+                                    <?php endforeach; ?>
+
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="field" id="campoAssistencia" hidden>
+
+                            <label class="label" for="assistenciaEvento">
+                                Assistência
+                            </label>
+
+                            <div class="select is-fullwidth select-branco">
+                                <select name="assistencia_id" id="assistenciaEvento">
+                                    <option value="">Sem assistência</option>
+
+                                    <?php foreach ($atletasDisponiveis as $atleta): ?>
+
+                                        <?php if (
+                                            $atleta['funcao_inicial'] === null ||
+                                            $atleta['situacao_atual'] !== 'em_campo'
+                                        ) {
+                                            continue;
+                                        } ?>
+
+                                        <option
+                                            value="<?= (int) $atleta['id'] ?>"
+                                            data-equipe="<?= (int) $atleta['turma_id'] ?>"
+                                        >
+                                            <?= escapar($atleta['nome']) ?>
+                                        </option>
+
+                                    <?php endforeach; ?>
+
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="info-evento" id="informacaoEvento">
+                            Escolha um evento para visualizar os campos necessários.
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="button is-link is-medium is-fullwidth"
+                            id="botaoRegistrarEvento"
+                            disabled
+                        >
+                            Registrar evento
+                        </button>
+
+                    </form>
+
+                <?php endif; ?>
+
+            </div>
+
+        </div>
+
+    <?php endif; ?>
+
+    <!-- Cronômetro: mantido -->
 
     <div class="cartao has-text-centered">
 
@@ -1898,7 +1994,7 @@ if ($ehAdmin) {
         </div>
     </div>
 
-    <!-- Ocorrências -->
+    <!-- Ocorrências manuais -->
 
     <?php if (!$encerrada): ?>
 
@@ -2017,6 +2113,155 @@ function fecharSubstituicao(id) {
         elemento.hidden = true;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| Formulário dinâmico de eventos
+|--------------------------------------------------------------------------
+*/
+
+(() => {
+
+    const equipe = document.getElementById('equipeEvento');
+    const evento = document.getElementById('tipoEvento');
+    const atleta = document.getElementById('atletaEvento');
+    const assistencia = document.getElementById('assistenciaEvento');
+
+    const campoAtleta = document.getElementById('campoAtleta');
+    const campoAssistencia = document.getElementById('campoAssistencia');
+
+    const informacao = document.getElementById('informacaoEvento');
+    const botao = document.getElementById('botaoRegistrarEvento');
+
+    if (!equipe || !evento || !botao) return;
+
+    function atualizarOpcoesJogadores() {
+
+        const equipeSelecionada = equipe.value;
+        const atletaSelecionado = atleta?.value || '';
+
+        if (atleta) {
+            Array.from(atleta.options).forEach(opcao => {
+
+                if (!opcao.value) return;
+
+                opcao.hidden =
+                    equipeSelecionada !== '' &&
+                    opcao.dataset.equipe !== equipeSelecionada;
+            });
+
+            if (
+                atleta.selectedOptions[0]?.hidden
+            ) {
+                atleta.value = '';
+            }
+        }
+
+        if (assistencia) {
+            Array.from(assistencia.options).forEach(opcao => {
+
+                if (!opcao.value) return;
+
+                const mesmaEquipe =
+                    equipeSelecionada === '' ||
+                    opcao.dataset.equipe === equipeSelecionada;
+
+                const diferenteDoAtleta =
+                    opcao.value !== atletaSelecionado;
+
+                opcao.hidden = !mesmaEquipe || !diferenteDoAtleta;
+            });
+
+            if (assistencia.selectedOptions[0]?.hidden) {
+                assistencia.value = '';
+            }
+        }
+    }
+
+    function atualizarFormulario() {
+
+        const opcao = evento.selectedOptions[0];
+
+        if (!opcao || !opcao.value) {
+
+            campoAtleta.hidden = true;
+            campoAssistencia.hidden = true;
+
+            if (atleta) {
+                atleta.required = false;
+                atleta.disabled = true;
+            }
+
+            if (assistencia) {
+                assistencia.disabled = true;
+                assistencia.required = false;
+            }
+
+            botao.disabled = true;
+
+            informacao.textContent =
+                'Escolha um evento para visualizar os campos necessários.';
+
+            return;
+        }
+
+        const exigeAtleta = opcao.dataset.exigeAtleta === '1';
+        const permiteAssistencia = opcao.dataset.permiteAssistencia === '1';
+        const pontos = Number(opcao.dataset.pontos || 0);
+
+        campoAtleta.hidden = !exigeAtleta;
+        campoAssistencia.hidden = !permiteAssistencia;
+
+        if (atleta) {
+            atleta.required = exigeAtleta;
+            atleta.disabled = !exigeAtleta;
+        }
+
+        if (assistencia) {
+            assistencia.disabled = !permiteAssistencia;
+            assistencia.required = false;
+        }
+
+        let texto = 'Evento selecionado.';
+
+        if (exigeAtleta) {
+            texto += ' Selecione o jogador relacionado.';
+        }
+
+        if (permiteAssistencia) {
+            texto += ' A assistência é opcional.';
+        }
+
+        if (pontos !== 0) {
+            texto += ' Este evento altera o placar em ' +
+                (pontos > 0 ? '+' : '') + pontos + ' ponto(s).';
+        }
+
+        informacao.textContent = texto;
+
+        atualizarOpcoesJogadores();
+
+        botao.disabled = equipe.value === '';
+    }
+
+    equipe.addEventListener('change', () => {
+        atualizarOpcoesJogadores();
+        atualizarFormulario();
+    });
+
+    evento.addEventListener('change', atualizarFormulario);
+
+    atleta?.addEventListener('change', atualizarOpcoesJogadores);
+
+    atualizarFormulario();
+
+})();
+
+/*
+|--------------------------------------------------------------------------
+| Cronômetro e sincronização: mantidos
+|--------------------------------------------------------------------------
+*/
 
 (() => {
 
@@ -2220,6 +2465,11 @@ function fecharSubstituicao(id) {
         elenco: '👥 Elenco da partida',
         substituicao: '🔄 Substituição'
     };
+
+    <?php foreach ($eventosModalidade as $evento): ?>
+        nomesEventos[<?= json_encode($evento['tipo_evento'], JSON_UNESCAPED_UNICODE) ?>] =
+            <?= json_encode($evento['nome'], JSON_UNESCAPED_UNICODE) ?>;
+    <?php endforeach; ?>
 
     function atualizarHistorico(eventos) {
 

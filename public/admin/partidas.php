@@ -51,6 +51,33 @@ function buscarPartida(PDO $pdo, int $id): ?array
     return $partida ?: null;
 }
 
+function buscarConfiguracaoModalidade(PDO $pdo, int $id): ?array
+{
+    $stmt = $pdo->prepare(
+        'SELECT
+            id,
+            nome,
+            formato_partida,
+            duracao_periodo_segundos,
+            quantidade_periodos,
+            intervalo_segundos,
+            quantidade_sets,
+            pontos_por_set,
+            pontos_set_decisivo,
+            limite_pontos,
+            duracao_maxima_segundos
+         FROM modalidades
+         WHERE id = ?
+         LIMIT 1'
+    );
+
+    $stmt->execute([$id]);
+
+    $modalidade = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $modalidade ?: null;
+}
+
 function registrarEvento(
     PDO $pdo,
     int $partidaId,
@@ -78,6 +105,66 @@ function redirecionarPartidas(string $sucesso): never
     exit;
 }
 
+function nomeFormatoPartida(string $formato): string
+{
+    return match ($formato) {
+        'periodos' => 'Por períodos',
+        'sets' => 'Por sets',
+        'tempo_pontos' => 'Por tempo e pontuação',
+        'eliminacao' => 'Por eliminações',
+        'tempo_individual' => 'Tempo individual',
+        'coroas' => 'Por coroas',
+        default => 'Não definido',
+    };
+}
+
+function montarDescricaoFormato(array $config): string
+{
+    $formato = $config['formato_partida'] ?? '';
+
+    return match ($formato) {
+        'periodos' =>
+            ((int) ($config['quantidade_periodos'] ?? 0)) .
+            ' períodos de ' .
+            ((int) ($config['duracao_periodo_segundos'] ?? 0) / 60) .
+            ' minutos; intervalo de ' .
+            ((int) ($config['intervalo_segundos'] ?? 0)) .
+            ' segundos',
+
+        'sets' =>
+            'Melhor de ' .
+            ((int) ($config['quantidade_sets'] ?? 0)) .
+            ' sets; ' .
+            ((int) ($config['pontos_por_set'] ?? 0)) .
+            ' pontos por set; set decisivo com ' .
+            ((int) ($config['pontos_set_decisivo'] ?? 0)) .
+            ' pontos',
+
+        'tempo_pontos' =>
+            'Limite de ' .
+            ((int) ($config['limite_pontos'] ?? 0)) .
+            ' pontos; tempo máximo de ' .
+            ((int) ($config['duracao_maxima_segundos'] ?? 0) / 60) .
+            ' minutos',
+
+        'eliminacao' =>
+            !empty($config['duracao_maxima_segundos'])
+                ? 'Por eliminações; tempo máximo de ' .
+                    ((int) $config['duracao_maxima_segundos'] / 60) .
+                    ' minutos'
+                : 'Por eliminações, sem tempo máximo definido',
+
+        'tempo_individual' =>
+            'Tempo individual de ' .
+            ((int) ($config['duracao_maxima_segundos'] ?? 0) / 60) .
+            ' minutos',
+
+        'coroas' => 'Vence quem conquistar mais coroas',
+
+        default => 'Formato não configurado',
+    };
+}
+
 $usuario = usuarioAtual();
 $usuarioId = isset($usuario['id']) ? (int) $usuario['id'] : null;
 
@@ -86,10 +173,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erros[] = 'Sessão de segurança inválida. Atualize a página e tente novamente.';
     } else {
         $acao = (string) ($_POST['acao'] ?? '');
+
         $idValidado = filter_var(
             $_POST['id'] ?? null,
             FILTER_VALIDATE_INT
         );
+
         $id = $idValidado !== false && $idValidado !== null
             ? (int) $idValidado
             : 0;
@@ -100,21 +189,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$editando) {
                 $erros[] = 'Partida não encontrada.';
             }
+
         } elseif ($acao === 'salvar') {
             $modalidadeId = filter_var(
                 $_POST['modalidade_id'] ?? null,
                 FILTER_VALIDATE_INT
             );
+
             $turmaCasaId = filter_var(
                 $_POST['turma_casa_id'] ?? null,
                 FILTER_VALIDATE_INT
             );
+
             $turmaVisitanteId = filter_var(
                 $_POST['turma_visitante_id'] ?? null,
                 FILTER_VALIDATE_INT
             );
 
             $responsavelValor = trim((string) ($_POST['responsavel_id'] ?? ''));
+
             $responsavelId = $responsavelValor === ''
                 ? null
                 : filter_var($responsavelValor, FILTER_VALIDATE_INT);
@@ -123,34 +216,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $horario = trim((string) ($_POST['horario'] ?? ''));
             $periodo = (string) ($_POST['periodo_escolar'] ?? '');
             $local = trim((string) ($_POST['local_partida'] ?? ''));
-            $duracao = filter_var(
-                $_POST['duracao_periodo_min'] ?? null,
-                FILTER_VALIDATE_INT
-            );
-            $quantidade = filter_var(
-                $_POST['quantidade_periodos'] ?? null,
-                FILTER_VALIDATE_INT
-            );
-            $intervalo = filter_var(
-                $_POST['intervalo_min'] ?? null,
-                FILTER_VALIDATE_INT
-            );
+
             $placarCasa = filter_var(
-                $_POST['placar_casa'] ?? null,
+                $_POST['placar_casa'] ?? 0,
                 FILTER_VALIDATE_INT
             );
+
             $placarVisitante = filter_var(
-                $_POST['placar_visitante'] ?? null,
+                $_POST['placar_visitante'] ?? 0,
                 FILTER_VALIDATE_INT
             );
+
             $status = (string) ($_POST['status'] ?? 'agendada');
             $youtube = trim((string) ($_POST['youtube_url'] ?? ''));
+
             $youtubeStatus = (string) (
                 $_POST['youtube_status'] ?? 'sem_transmissao'
             );
+
             $observacoes = trim((string) ($_POST['observacoes'] ?? ''));
 
-            if ($id < 0 || ($id > 0 && !buscarPartida($pdo, $id))) {
+            $partidaOriginal = $id > 0
+                ? buscarPartida($pdo, $id)
+                : null;
+
+            if ($id < 0 || ($id > 0 && !$partidaOriginal)) {
                 $erros[] = 'A partida selecionada não foi encontrada.';
             }
 
@@ -186,30 +276,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $data . ' ' . $horario
                 );
 
-                if (!$dataHora || $dataHora->format('Y-m-d H:i') !== $data . ' ' . $horario) {
+                if (
+                    !$dataHora
+                    || $dataHora->format('Y-m-d H:i') !== $data . ' ' . $horario
+                ) {
                     $erros[] = 'Informe uma data e um horário válidos.';
                 } else {
                     $inicioPrevisto = $dataHora->format('Y-m-d H:i:s');
                 }
             }
 
-            if ($duracao === false || $duracao === null || $duracao < 1 || $duracao > 300) {
-                $erros[] = 'A duração deve ficar entre 1 e 300 minutos.';
-            }
-
-            if ($quantidade === false || $quantidade === null || $quantidade < 1 || $quantidade > 10) {
-                $erros[] = 'A quantidade de períodos deve ficar entre 1 e 10.';
-            }
-
-            if ($intervalo === false || $intervalo === null || $intervalo < 0 || $intervalo > 120) {
-                $erros[] = 'O intervalo deve ficar entre 0 e 120 minutos.';
-            }
-
-            if ($placarCasa === false || $placarCasa === null || $placarCasa < 0 || $placarCasa > 65535) {
+            if (
+                $placarCasa === false || $placarCasa === null
+                || $placarCasa < 0 || $placarCasa > 65535
+            ) {
                 $erros[] = 'Informe um placar válido para a turma da casa.';
             }
 
-            if ($placarVisitante === false || $placarVisitante === null || $placarVisitante < 0 || $placarVisitante > 65535) {
+            if (
+                $placarVisitante === false || $placarVisitante === null
+                || $placarVisitante < 0 || $placarVisitante > 65535
+            ) {
                 $erros[] = 'Informe um placar válido para a turma visitante.';
             }
 
@@ -250,20 +337,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $erros[] = 'Selecione um responsável válido.';
             }
 
-            // Confere a existência das referências.
+            $configuracao = null;
+
             if (!$erros) {
-                $stmt = $pdo->prepare(
-                    'SELECT COUNT(*) FROM modalidades WHERE id = ?'
+                $configuracaoModalidade = buscarConfiguracaoModalidade(
+                    $pdo,
+                    (int) $modalidadeId
                 );
-                $stmt->execute([$modalidadeId]);
 
-                if ((int) $stmt->fetchColumn() !== 1) {
+                if (!$configuracaoModalidade) {
                     $erros[] = 'Modalidade não encontrada.';
-                }
+                } else {
+                    // Sempre utiliza a configuração atual da modalidade.
+                    $configuracao = [
+                        'formato_partida' => $configuracaoModalidade['formato_partida'],
+                        'duracao_periodo_segundos' => $configuracaoModalidade['duracao_periodo_segundos'],
+                        'quantidade_periodos' => $configuracaoModalidade['quantidade_periodos'],
+                        'intervalo_segundos' => $configuracaoModalidade['intervalo_segundos'],
+                        'quantidade_sets' => $configuracaoModalidade['quantidade_sets'],
+                        'pontos_por_set' => $configuracaoModalidade['pontos_por_set'],
+                        'pontos_set_decisivo' => $configuracaoModalidade['pontos_set_decisivo'],
+                        'limite_pontos' => $configuracaoModalidade['limite_pontos'],
+                        'duracao_maxima_segundos' => $configuracaoModalidade['duracao_maxima_segundos'],
+                    ];
 
+                    $formatoPermitido = [
+                        'periodos',
+                        'sets',
+                        'tempo_pontos',
+                        'eliminacao',
+                        'tempo_individual',
+                        'coroas',
+                    ];
+
+                    if (!in_array($configuracao['formato_partida'], $formatoPermitido, true)) {
+                        $erros[] = 'O formato da modalidade não está configurado corretamente.';
+                    }
+
+                    if (
+                        $configuracao['formato_partida'] === 'periodos'
+                        && (
+                            (int) $configuracao['duracao_periodo_segundos'] < 1
+                            || (int) $configuracao['quantidade_periodos'] < 1
+                        )
+                    ) {
+                        $erros[] = 'Configure a duração e a quantidade de períodos da modalidade.';
+                    }
+
+                    if (
+                        $configuracao['formato_partida'] === 'sets'
+                        && (
+                            (int) $configuracao['quantidade_sets'] < 1
+                            || (int) $configuracao['pontos_por_set'] < 1
+                            || (int) $configuracao['pontos_set_decisivo'] < 1
+                        )
+                    ) {
+                        $erros[] = 'Configure a quantidade de sets e a pontuação da modalidade.';
+                    }
+
+                    if (
+                        $configuracao['formato_partida'] === 'tempo_pontos'
+                        && (
+                            (int) $configuracao['limite_pontos'] < 1
+                            || (int) $configuracao['duracao_maxima_segundos'] < 1
+                        )
+                    ) {
+                        $erros[] = 'Configure o limite de pontos e o tempo máximo da modalidade.';
+                    }
+
+                    if (
+                        $configuracao['formato_partida'] === 'tempo_individual'
+                        && (int) $configuracao['duracao_maxima_segundos'] < 1
+                    ) {
+                        $erros[] = 'Configure o tempo individual da modalidade.';
+                    }
+                }
+            }
+
+            if (!$erros) {
                 $stmt = $pdo->prepare(
                     'SELECT COUNT(*) FROM turmas WHERE id IN (?, ?)'
                 );
+
                 $stmt->execute([$turmaCasaId, $turmaVisitanteId]);
 
                 if ((int) $stmt->fetchColumn() !== 2) {
@@ -276,6 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          WHERE id = ? AND ativo = 1
                            AND perfil IN ('admin', 'arbitro')"
                     );
+
                     $stmt->execute([$responsavelId]);
 
                     if ((int) $stmt->fetchColumn() !== 1) {
@@ -284,9 +440,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            if (!$erros) {
+            if (!$erros && $configuracao) {
                 try {
                     $pdo->beginTransaction();
+
+                    $duracaoSegundos = (int) (
+                        $configuracao['duracao_periodo_segundos'] ?? 0
+                    );
+
+                    $quantidadePeriodos = (int) (
+                        $configuracao['quantidade_periodos'] ?? 0
+                    );
+
+                    $intervaloSegundos = (int) (
+                        $configuracao['intervalo_segundos'] ?? 0
+                    );
+
+                    // Valores de compatibilidade com os campos antigos.
+                    $duracaoMinutos = $duracaoSegundos > 0
+                        ? max(1, (int) ceil($duracaoSegundos / 60))
+                        : 10;
+
+                    $intervaloMinutos = (int) floor($intervaloSegundos / 60);
 
                     $dados = [
                         'modalidade' => $modalidadeId,
@@ -296,9 +471,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'periodo' => $periodo,
                         'local' => $local !== '' ? $local : null,
                         'responsavel' => $responsavelId,
-                        'duracao' => $duracao,
-                        'quantidade' => $quantidade,
-                        'intervalo' => $intervalo,
+
+                        'duracao_legada' => $duracaoMinutos,
+
+                        // A coluna antiga pode ser obrigatória.
+                        // Modalidades sem períodos recebem 1.
+                        'quantidade_periodos' => $quantidadePeriodos > 0
+                            ? $quantidadePeriodos
+                            : 1,
+
+                        'intervalo_legado' => $intervaloMinutos,
+
+                        'formato' => $configuracao['formato_partida'],
+                        'duracao_segundos' => $configuracao['duracao_periodo_segundos'],
+                        'intervalo_segundos' => $intervaloSegundos,
+                        'quantidade_sets' => $configuracao['quantidade_sets'],
+                        'pontos_por_set' => $configuracao['pontos_por_set'],
+                        'pontos_set_decisivo' => $configuracao['pontos_set_decisivo'],
+                        'limite_pontos' => $configuracao['limite_pontos'],
+                        'duracao_maxima' => $configuracao['duracao_maxima_segundos'],
+
                         'youtube' => $youtube !== '' ? $youtube : null,
                         'youtube_status' => $youtubeStatus,
                         'placar_casa' => $placarCasa,
@@ -316,9 +508,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     periodo_escolar = :periodo,
                                     local_partida = :local,
                                     responsavel_id = :responsavel,
-                                    duracao_periodo_min = :duracao,
-                                    quantidade_periodos = :quantidade,
-                                    intervalo_min = :intervalo,
+
+                                    duracao_periodo_min = :duracao_legada,
+                                    quantidade_periodos = :quantidade_periodos,
+                                    intervalo_min = :intervalo_legado,
+
+                                    formato_partida = :formato,
+                                    duracao_periodo_segundos = :duracao_segundos,
+                                    intervalo_segundos = :intervalo_segundos,
+                                    quantidade_sets = :quantidade_sets,
+                                    pontos_por_set = :pontos_por_set,
+                                    pontos_set_decisivo = :pontos_set_decisivo,
+                                    limite_pontos = :limite_pontos,
+                                    duracao_maxima_segundos = :duracao_maxima,
+
                                     youtube_url = :youtube,
                                     youtube_status = :youtube_status,
                                     placar_casa = :placar_casa,
@@ -344,21 +547,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         redirecionarPartidas('editada');
                     }
 
-                    $sql = "INSERT INTO partidas (
-                                modalidade_id, turma_casa_id, turma_visitante_id,
-                                inicio_previsto, periodo_escolar, local_partida,
-                                responsavel_id, duracao_periodo_min,
-                                quantidade_periodos, intervalo_min,
-                                youtube_url, youtube_status,
-                                placar_casa, placar_visitante, status, observacoes
+                    $sql = 'INSERT INTO partidas (
+                                modalidade_id,
+                                turma_casa_id,
+                                turma_visitante_id,
+                                inicio_previsto,
+                                periodo_escolar,
+                                local_partida,
+                                responsavel_id,
+
+                                duracao_periodo_min,
+                                quantidade_periodos,
+                                intervalo_min,
+
+                                formato_partida,
+                                duracao_periodo_segundos,
+                                intervalo_segundos,
+                                quantidade_sets,
+                                pontos_por_set,
+                                pontos_set_decisivo,
+                                limite_pontos,
+                                duracao_maxima_segundos,
+
+                                youtube_url,
+                                youtube_status,
+                                placar_casa,
+                                placar_visitante,
+                                status,
+                                observacoes
                             ) VALUES (
-                                :modalidade, :casa, :visitante,
-                                :inicio, :periodo, :local,
-                                :responsavel, :duracao,
-                                :quantidade, :intervalo,
-                                :youtube, :youtube_status,
-                                :placar_casa, :placar_visitante, :status, :observacoes
-                            )";
+                                :modalidade,
+                                :casa,
+                                :visitante,
+                                :inicio,
+                                :periodo,
+                                :local,
+                                :responsavel,
+
+                                :duracao_legada,
+                                :quantidade_periodos,
+                                :intervalo_legado,
+
+                                :formato,
+                                :duracao_segundos,
+                                :intervalo_segundos,
+                                :quantidade_sets,
+                                :pontos_por_set,
+                                :pontos_set_decisivo,
+                                :limite_pontos,
+                                :duracao_maxima,
+
+                                :youtube,
+                                :youtube_status,
+                                :placar_casa,
+                                :placar_visitante,
+                                :status,
+                                :observacoes
+                            )';
 
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute($dados);
@@ -381,8 +626,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $pdo->rollBack();
                     }
 
-                    error_log('Erro ao salvar partida: ' . $e->getMessage());
-                    $erros[] = 'Não foi possível salvar a partida. Verifique os dados e tente novamente.';
+                    error_log('ERRO AO SALVAR PARTIDA: ' . $e->getMessage());
+
+                    // Exibição temporária para diagnóstico.
+                    $erros[] = 'Erro técnico ao salvar: ' . $e->getMessage();
                 }
             }
 
@@ -395,9 +642,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'periodo_escolar' => $periodo,
                 'local_partida' => $local,
                 'responsavel_id' => $responsavelId ?: '',
-                'duracao_periodo_min' => $duracao,
-                'quantidade_periodos' => $quantidade,
-                'intervalo_min' => $intervalo,
                 'youtube_url' => $youtube,
                 'youtube_status' => $youtubeStatus,
                 'placar_casa' => $placarCasa,
@@ -405,6 +649,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'status' => $status,
                 'observacoes' => $observacoes,
             ];
+
+            if ($configuracao) {
+                $editando = array_merge($editando, $configuracao);
+            }
 
         } elseif ($acao === 'cancelar') {
             $partida = $id > 0 ? buscarPartida($pdo, $id) : null;
@@ -422,6 +670,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare(
                         "UPDATE partidas SET status = 'cancelada' WHERE id = ?"
                     );
+
                     $stmt->execute([$id]);
 
                     registrarEvento(
@@ -441,7 +690,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     error_log('Erro ao cancelar partida: ' . $e->getMessage());
-                    $erros[] = 'Não foi possível cancelar a partida.';
+                    $erros[] = 'Não foi possível cancelar a partida: ' . $e->getMessage();
                 }
             }
 
@@ -460,8 +709,25 @@ if (isset($_GET['sucesso'])) {
     };
 }
 
+/*
+ * Carrega as modalidades com todas as configurações.
+ */
 $modalidades = $pdo->query(
-    'SELECT id, nome, categoria FROM modalidades ORDER BY nome'
+    'SELECT
+        id,
+        nome,
+        categoria,
+        formato_partida,
+        duracao_periodo_segundos,
+        quantidade_periodos,
+        intervalo_segundos,
+        quantidade_sets,
+        pontos_por_set,
+        pontos_set_decisivo,
+        limite_pontos,
+        duracao_maxima_segundos
+     FROM modalidades
+     ORDER BY nome'
 )->fetchAll(PDO::FETCH_ASSOC);
 
 $turmas = $pdo->query(
@@ -510,9 +776,6 @@ $valoresFormulario = $editando ?? [
     'periodo_escolar' => 'manha',
     'local_partida' => '',
     'responsavel_id' => '',
-    'duracao_periodo_min' => 10,
-    'quantidade_periodos' => 2,
-    'intervalo_min' => 5,
     'youtube_url' => '',
     'youtube_status' => 'sem_transmissao',
     'placar_casa' => 0,
@@ -526,10 +789,49 @@ $horarioFormulario = '';
 
 if (!empty($valoresFormulario['inicio_previsto'])) {
     $timestamp = strtotime((string) $valoresFormulario['inicio_previsto']);
+
     if ($timestamp !== false) {
         $dataFormulario = date('Y-m-d', $timestamp);
         $horarioFormulario = date('H:i', $timestamp);
     }
+}
+
+/*
+ * Configuração exibida inicialmente no formulário.
+ */
+$configuracaoInicial = null;
+
+if (!empty($valoresFormulario['modalidade_id'])) {
+    foreach ($modalidades as $modalidade) {
+        if ((int) $modalidade['id'] === (int) $valoresFormulario['modalidade_id']) {
+            $configuracaoInicial = $modalidade;
+            break;
+        }
+    }
+
+    if (!empty($valoresFormulario['id']) && !empty($valoresFormulario['formato_partida'])) {
+        $configuracaoInicial = array_merge(
+            $configuracaoInicial ?? [],
+            $valoresFormulario
+        );
+    }
+}
+
+$modalidadesJson = [];
+
+foreach ($modalidades as $modalidade) {
+    $modalidadesJson[(string) $modalidade['id']] = [
+        'nome' => $modalidade['nome'],
+        'formato' => $modalidade['formato_partida'],
+        'duracao' => $modalidade['duracao_periodo_segundos'],
+        'periodos' => $modalidade['quantidade_periodos'],
+        'intervalo' => $modalidade['intervalo_segundos'],
+        'sets' => $modalidade['quantidade_sets'],
+        'pontosSet' => $modalidade['pontos_por_set'],
+        'pontosDecisivo' => $modalidade['pontos_set_decisivo'],
+        'limitePontos' => $modalidade['limite_pontos'],
+        'duracaoMaxima' => $modalidade['duracao_maxima_segundos'],
+    ];
 }
 
 require_once __DIR__ . '/../../includes/admin/header.php';
@@ -575,12 +877,14 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             <div class="column is-6">
                 <label class="label">Modalidade *</label>
                 <div class="select is-fullwidth">
-                    <select name="modalidade_id" required>
+                    <select name="modalidade_id" id="modalidade_id" required>
                         <option value="">Selecione</option>
+
                         <?php foreach ($modalidades as $m): ?>
                             <option value="<?= (int) $m['id'] ?>"
                                 <?= (string) $valoresFormulario['modalidade_id'] === (string) $m['id'] ? 'selected' : '' ?>>
-                                <?= escaparPartida($m['nome']) ?> — <?= escaparPartida(ucfirst($m['categoria'])) ?>
+                                <?= escaparPartida($m['nome']) ?> —
+                                <?= escaparPartida(ucfirst($m['categoria'])) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -593,9 +897,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             ] as $campo => $rotulo): ?>
                 <div class="column is-3">
                     <label class="label"><?= $rotulo ?></label>
+
                     <div class="select is-fullwidth">
                         <select name="<?= escaparPartida($campo) ?>" required>
                             <option value="">Selecione</option>
+
                             <?php foreach ($turmas as $t): ?>
                                 <option value="<?= (int) $t['id'] ?>"
                                     <?= (string) $valoresFormulario[$campo] === (string) $t['id'] ? 'selected' : '' ?>>
@@ -622,26 +928,38 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
             <div class="column is-3">
                 <label class="label">Período escolar *</label>
+
                 <div class="select is-fullwidth">
                     <select name="periodo_escolar" required>
-                        <option value="manha" <?= $valoresFormulario['periodo_escolar'] === 'manha' ? 'selected' : '' ?>>Manhã</option>
-                        <option value="tarde" <?= $valoresFormulario['periodo_escolar'] === 'tarde' ? 'selected' : '' ?>>Tarde</option>
+                        <option value="manha"
+                            <?= $valoresFormulario['periodo_escolar'] === 'manha' ? 'selected' : '' ?>>
+                            Manhã
+                        </option>
+
+                        <option value="tarde"
+                            <?= $valoresFormulario['periodo_escolar'] === 'tarde' ? 'selected' : '' ?>>
+                            Tarde
+                        </option>
                     </select>
                 </div>
             </div>
 
             <div class="column is-3">
                 <label class="label">Local</label>
-                <input class="input" type="text" name="local_partida" maxlength="120"
+
+                <input class="input" type="text" name="local_partida"
+                       maxlength="120"
                        value="<?= escaparPartida($valoresFormulario['local_partida']) ?>"
                        placeholder="Ex.: Quadra coberta">
             </div>
 
             <div class="column is-4">
                 <label class="label">Árbitro ou responsável</label>
+
                 <div class="select is-fullwidth">
                     <select name="responsavel_id">
                         <option value="">A definir</option>
+
                         <?php foreach ($responsaveis as $r): ?>
                             <option value="<?= (int) $r['id'] ?>"
                                 <?= (string) $valoresFormulario['responsavel_id'] === (string) $r['id'] ? 'selected' : '' ?>>
@@ -651,30 +969,21 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                     </select>
                 </div>
             </div>
+        </div>
 
-            <div class="column is-2">
-                <label class="label">Duração (min)</label>
-                <input class="input" type="number" name="duracao_periodo_min"
-                       min="1" max="300" required
-                       value="<?= escaparPartida($valoresFormulario['duracao_periodo_min']) ?>">
-            </div>
+        <div id="configuracaoModalidade" class="notification is-info is-light mt-3"
+             style="display:none;">
+            <strong class="is-block mb-2">Formato da modalidade</strong>
 
-            <div class="column is-2">
-                <label class="label">Nº de períodos</label>
-                <input class="input" type="number" name="quantidade_periodos"
-                       min="1" max="10" required
-                       value="<?= escaparPartida($valoresFormulario['quantidade_periodos']) ?>">
-            </div>
+            <p id="formatoNome" class="mb-2"></p>
 
-            <div class="column is-2">
-                <label class="label">Intervalo (min)</label>
-                <input class="input" type="number" name="intervalo_min"
-                       min="0" max="120" required
-                       value="<?= escaparPartida($valoresFormulario['intervalo_min']) ?>">
-            </div>
+            <div id="detalhesFormato"></div>
+        </div>
 
+        <div class="columns is-multiline mt-2">
             <div class="column is-3">
                 <label class="label">Placar da casa</label>
+
                 <input class="input" type="number" name="placar_casa"
                        min="0" max="65535" required
                        value="<?= escaparPartida($valoresFormulario['placar_casa']) ?>">
@@ -682,6 +991,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
             <div class="column is-3">
                 <label class="label">Placar visitante</label>
+
                 <input class="input" type="number" name="placar_visitante"
                        min="0" max="65535" required
                        value="<?= escaparPartida($valoresFormulario['placar_visitante']) ?>">
@@ -689,6 +999,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
             <div class="column is-3">
                 <label class="label">Status</label>
+
                 <div class="select is-fullwidth">
                     <select name="status" required>
                         <?php foreach ($statusOpcoes as $valor => $rotulo): ?>
@@ -702,9 +1013,10 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </div>
 
             <div class="column is-3">
-                <label class="label">Status da transmissão</label>
+                <label class="label">Transmissão</label>
+
                 <div class="select is-fullwidth">
-                    <select name="youtube_status">
+                    <select name="youtube_status" id="youtube_status">
                         <?php foreach ([
                             'sem_transmissao' => 'Sem transmissão',
                             'agendada' => 'Agendada',
@@ -722,15 +1034,18 @@ require_once __DIR__ . '/../../includes/admin/header.php';
 
             <div class="column is-6">
                 <label class="label">Link do YouTube</label>
-                <input class="input" type="url" name="youtube_url" maxlength="500"
+
+                <input class="input" type="url" name="youtube_url"
+                       maxlength="500"
                        value="<?= escaparPartida($valoresFormulario['youtube_url']) ?>"
                        placeholder="https://www.youtube.com/...">
             </div>
 
             <div class="column is-6">
                 <label class="label">Observações</label>
-                <textarea class="textarea" name="observacoes" maxlength="5000"
-                          rows="2"><?= escaparPartida($valoresFormulario['observacoes']) ?></textarea>
+
+                <textarea class="textarea" name="observacoes"
+                          maxlength="5000" rows="2"><?= escaparPartida($valoresFormulario['observacoes']) ?></textarea>
             </div>
         </div>
 
@@ -740,7 +1055,9 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </button>
 
             <?php if (!empty($valoresFormulario['id'])): ?>
-                <a href="partidas.php" class="button is-dark">Cancelar edição</a>
+                <a href="partidas.php" class="button is-dark">
+                    Cancelar edição
+                </a>
             <?php endif; ?>
         </div>
     </form>
@@ -768,6 +1085,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                         <th>Ações</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <?php foreach ($partidas as $p): ?>
                         <tr>
@@ -778,11 +1096,17 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                 <?= (int) $p['placar_visitante'] ?>
                                 <strong><?= escaparPartida($p['turma_visitante']) ?></strong>
                             </td>
+
                             <td>
                                 <?= escaparPartida($p['modalidade']) ?>
                                 <br>
                                 <small><?= escaparPartida(ucfirst($p['categoria'])) ?></small>
+                                <br>
+                                <small class="has-text-grey">
+                                    <?= escaparPartida(nomeFormatoPartida($p['formato_partida'])) ?>
+                                </small>
                             </td>
+
                             <td>
                                 <?php if ($p['inicio_previsto']): ?>
                                     <?= date('d/m/Y H:i', strtotime($p['inicio_previsto'])) ?>
@@ -790,7 +1114,11 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                     A definir
                                 <?php endif; ?>
                             </td>
-                            <td><?= escaparPartida($p['local_partida'] ?: 'A definir') ?></td>
+
+                            <td>
+                                <?= escaparPartida($p['local_partida'] ?: 'A definir') ?>
+                            </td>
+
                             <td>
                                 <span class="tag <?= match ($p['status']) {
                                     'em_andamento' => 'is-success',
@@ -802,32 +1130,43 @@ require_once __DIR__ . '/../../includes/admin/header.php';
                                     <?= escaparPartida($statusOpcoes[$p['status']] ?? $p['status']) ?>
                                 </span>
                             </td>
+
                             <td>
                                 <div class="buttons">
                                     <form method="POST" action="partidas.php">
-                                        <input type="hidden" name="token_csrf" value="<?= escaparPartida($tokenCsrf) ?>">
+                                        <input type="hidden" name="token_csrf"
+                                               value="<?= escaparPartida($tokenCsrf) ?>">
                                         <input type="hidden" name="acao" value="editar">
-                                        <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
+                                        <input type="hidden" name="id"
+                                               value="<?= (int) $p['id'] ?>">
+
                                         <button type="submit" class="button is-small is-link">
                                             Editar
                                         </button>
                                     </form>
 
-                                    <a class="button is-small is-success" href="../arbitro/partida.php?id=<?= (int) $p['id'] ?>">
+                                    <a class="button is-small is-success"
+                                       href="../arbitro/partida.php?id=<?= (int) $p['id'] ?>">
                                         Controlar partida
                                     </a>
 
-                                    <a class="button is-small is-info" href="../partida.php?id=<?= (int) $p['id'] ?>" target="_blank" rel="noopener noreferrer">
+                                    <a class="button is-small is-info"
+                                       href="../partida.php?id=<?= (int) $p['id'] ?>"
+                                       target="_blank" rel="noopener noreferrer">
                                         Ver página pública
                                     </a>
 
                                     <?php if (!in_array($p['status'], ['encerrada', 'cancelada'], true)): ?>
                                         <form method="POST" action="partidas.php"
                                               onsubmit="return confirm('Deseja cancelar esta partida?');">
-                                            <input type="hidden" name="token_csrf" value="<?= escaparPartida($tokenCsrf) ?>">
+                                            <input type="hidden" name="token_csrf"
+                                                   value="<?= escaparPartida($tokenCsrf) ?>">
                                             <input type="hidden" name="acao" value="cancelar">
-                                            <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
-                                            <button type="submit" class="button is-small is-danger is-dark">
+                                            <input type="hidden" name="id"
+                                                   value="<?= (int) $p['id'] ?>">
+
+                                            <button type="submit"
+                                                    class="button is-small is-danger is-dark">
                                                 Cancelar
                                             </button>
                                         </form>
@@ -841,5 +1180,140 @@ require_once __DIR__ . '/../../includes/admin/header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+const configuracoesModalidades = <?= json_encode(
+    $modalidadesJson,
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+) ?>;
+
+const modalidadeSelect = document.getElementById('modalidade_id');
+const painelConfiguracao = document.getElementById('configuracaoModalidade');
+const formatoNome = document.getElementById('formatoNome');
+const detalhesFormato = document.getElementById('detalhesFormato');
+
+const nomesFormatos = {
+    periodos: 'Por períodos',
+    sets: 'Por sets',
+    tempo_pontos: 'Por tempo e pontuação',
+    eliminacao: 'Por eliminações',
+    tempo_individual: 'Tempo individual',
+    coroas: 'Por coroas'
+};
+
+function formatarDuracao(segundos) {
+    if (!segundos) {
+        return 'Não definido';
+    }
+
+    const minutos = Math.floor(segundos / 60);
+    const resto = segundos % 60;
+
+    if (resto === 0) {
+        return minutos + ' minuto(s)';
+    }
+
+    if (minutos === 0) {
+        return resto + ' segundo(s)';
+    }
+
+    return minutos + 'min' + String(resto).padStart(2, '0') + 's';
+}
+
+function mostrarConfiguracaoModalidade(id) {
+    const config = configuracoesModalidades[id];
+
+    if (!config) {
+        painelConfiguracao.style.display = 'none';
+        return;
+    }
+
+    painelConfiguracao.style.display = 'block';
+
+    formatoNome.textContent =
+        'Formato: ' + (nomesFormatos[config.formato] || 'Não definido');
+
+    let detalhes = '';
+
+    switch (config.formato) {
+        case 'periodos':
+            detalhes = `
+                <p><strong>Duração:</strong>
+                    ${config.periodos} período(s) de
+                    ${formatarDuracao(config.duracao)}
+                </p>
+                <p><strong>Intervalo:</strong>
+                    ${formatarDuracao(config.intervalo)}
+                </p>
+            `;
+            break;
+
+        case 'sets':
+            detalhes = `
+                <p><strong>Quantidade:</strong>
+                    Melhor de ${config.sets} sets
+                </p>
+                <p><strong>Pontuação dos sets:</strong>
+                    ${config.pontosSet} pontos
+                </p>
+                <p><strong>Set decisivo:</strong>
+                    ${config.pontosDecisivo} pontos
+                </p>
+                <p class="has-text-grey is-size-7">
+                    Os sets precisam respeitar a diferença de pontos prevista no regulamento.
+                </p>
+            `;
+            break;
+
+        case 'tempo_pontos':
+            detalhes = `
+                <p><strong>Limite de pontuação:</strong>
+                    ${config.limitePontos} pontos
+                </p>
+                <p><strong>Tempo máximo:</strong>
+                    ${formatarDuracao(config.duracaoMaxima)}
+                </p>
+            `;
+            break;
+
+        case 'eliminacao':
+            detalhes = `
+                <p><strong>Objetivo:</strong> Eliminar os adversários.</p>
+                <p><strong>Tempo máximo:</strong>
+                    ${config.duracaoMaxima
+                        ? formatarDuracao(config.duracaoMaxima)
+                        : 'Sem limite definido'}
+                </p>
+            `;
+            break;
+
+        case 'tempo_individual':
+            detalhes = `
+                <p><strong>Tempo individual:</strong>
+                    ${formatarDuracao(config.duracaoMaxima)}
+                </p>
+            `;
+            break;
+
+        case 'coroas':
+            detalhes = `
+                <p><strong>Objetivo:</strong>
+                    Conquistar mais coroas que o adversário.
+                </p>
+            `;
+            break;
+    }
+
+    detalhesFormato.innerHTML = detalhes;
+}
+
+modalidadeSelect.addEventListener('change', function () {
+    mostrarConfiguracaoModalidade(this.value);
+});
+
+if (modalidadeSelect.value) {
+    mostrarConfiguracaoModalidade(modalidadeSelect.value);
+}
+</script>
 
 <?php require_once __DIR__ . '/../../includes/admin/footer.php'; ?>

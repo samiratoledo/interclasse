@@ -218,6 +218,59 @@ $footerPerfil = $headers[$perfil]['footer'] ?? null;
                 padding: 1.2rem;
             }
         }
+
+        /* Correção das cores dos textos do regulamento */
+
+        /* Textos gerais */
+        .regulamento-container,
+        .regulamento-container p,
+        .regulamento-container span,
+        .regulamento-container div,
+        .regulamento-container article {
+            color: #333333;
+        }
+
+        /* Título principal */
+        .regulamento-topo h1,
+        .regulamento-topo p {
+            color: #ffffff !important;
+        }
+
+        /* Navegação lateral */
+        .sidebar-box,
+        .sidebar-titulo {
+            color: #0b2948 !important;
+        }
+
+        .sidebar-links a {
+            color: #4a5568 !important;
+        }
+
+        .sidebar-links a:hover,
+        .sidebar-links a:focus {
+            color: #0b2948 !important;
+        }
+
+        /* Títulos das seções */
+        .secao-regulamento h2 {
+            color: #0b2948 !important;
+        }
+
+        /* Texto do conteúdo */
+        .conteudo-regulamento {
+            color: #333333 !important;
+        }
+
+        /* Link para voltar ao início */
+        .voltar-topo {
+            color: #3273dc !important;
+        }
+
+        /* Notificações */
+        .notification.is-danger,
+        .notification.is-warning {
+            color: #363636 !important;
+        }
     </style>
 </head>
 
@@ -299,9 +352,7 @@ $footerPerfil = $headers[$perfil]['footer'] ?? null;
 
                         <?php foreach ($secoes as $secao): ?>
 
-                            <article
-                                class="secao-regulamento"
-                                id="<?= escaparRegulamento($secao['slug']) ?>">
+                            <article class="secao-regulamento" id="<?= escaparRegulamento($secao['slug']) ?>">
 
                                 <h2 class="title is-4">
                                     <?= escaparRegulamento($secao['titulo']) ?>
