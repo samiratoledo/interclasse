@@ -1,60 +1,22 @@
--- ============================================================
--- INTERCLASSE ETEC
--- Script de criação e configuração do banco de dados
--- SGBD: MySQL 8
--- Engine: InnoDB
--- Codificação: utf8mb4
--- ============================================================
+-- =========================================================
+-- INTERCLASSE ETEC - BANCO DE DADOS COMPLETO
+-- MySQL 8.0+
+-- InnoDB | utf8mb4
+-- CRIAÇÃO DO BANCO DO ZERO
+-- =========================================================
 
+-- ATENÇÃO: apaga completamente o banco anterior!
+DROP DATABASE IF EXISTS interclasse_etec;
 
--- ============================================================
--- CONFIGURAÇÃO INICIAL DO BANCO DE DADOS
--- Cria o banco caso ainda não exista e seleciona sua utilização.
--- ============================================================
-
-CREATE DATABASE IF NOT EXISTS interclasse_etec
+CREATE DATABASE interclasse_etec
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
 USE interclasse_etec;
 
-
--- ============================================================
--- LIMPEZA DO BANCO DE DADOS
--- Desativa temporariamente a verificação de chaves estrangeiras
--- para permitir a exclusão das tabelas relacionadas.
---
--- ATENÇÃO: este procedimento apaga os dados existentes.
--- ============================================================
-
-SET FOREIGN_KEY_CHECKS = 0;
-
-DROP TABLE IF EXISTS
-    historico_regulamentos,
-    estado_partida,
-    inscricao_atletas,
-    eventos_partida,
-    partidas_arbitros,
-    partidas,
-    inscricoes,
-    atletas,
-    regulamentos,
-    usuarios,
-    modalidades,
-    turmas;
-
-SET FOREIGN_KEY_CHECKS = 1;
-
-
--- ============================================================
--- 1. TABELA: TURMAS
--- Armazena as turmas participantes do Interclasse.
---
--- Cada turma possui:
--- - Nome e período escolar.
--- - Caminho da imagem do brasão.
--- - Indicador de ativação.
--- ============================================================
+-- =========================================================
+-- 1. TURMAS
+-- =========================================================
 
 CREATE TABLE turmas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -65,8 +27,6 @@ CREATE TABLE turmas (
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Cadastro inicial das turmas participantes.
 INSERT INTO turmas (nome, periodo) VALUES
 ('1º TEC', 'manha'),
 ('2º TEC', 'manha'),
@@ -96,34 +56,48 @@ INSERT INTO turmas (nome, periodo) VALUES
 ('1º LM', 'tarde'),
 ('2º LM', 'tarde');
 
-
--- ============================================================
--- 2. TABELA: MODALIDADES
--- Armazena as modalidades esportivas e de jogos eletrônicos.
---
--- A categoria identifica o tipo de participação:
--- masculino, feminino ou misto.
---
--- minimo_atletas: quantidade mínima de atletas titulares.
--- maximo_atletas: limite total de atletas inscritos na equipe,
--- incluindo titulares e reservas.
--- ============================================================
+-- =========================================================
+-- 2. MODALIDADES
+-- =========================================================
 
 CREATE TABLE modalidades (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,
     descricao TEXT NULL,
+
     categoria ENUM('masculino', 'feminino', 'misto')
         NOT NULL DEFAULT 'misto',
+
     minimo_atletas SMALLINT UNSIGNED NOT NULL DEFAULT 1,
     maximo_atletas SMALLINT UNSIGNED NOT NULL DEFAULT 30,
+
     icone VARCHAR(255) NULL,
     ativa BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- CONFIGURAÇÃO DO FORMATO DA PARTIDA
+    formato_partida ENUM(
+        'periodos',
+        'sets',
+        'tempo_pontos',
+        'eliminacao',
+        'tempo_individual',
+        'coroas'
+    ) NOT NULL DEFAULT 'periodos',
+
+    duracao_periodo_segundos SMALLINT UNSIGNED NULL,
+    quantidade_periodos TINYINT UNSIGNED NULL,
+    intervalo_segundos SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+
+    quantidade_sets TINYINT UNSIGNED NULL,
+    pontos_por_set SMALLINT UNSIGNED NULL,
+    pontos_set_decisivo SMALLINT UNSIGNED NULL,
+
+    limite_pontos SMALLINT UNSIGNED NULL,
+    duracao_maxima_segundos SMALLINT UNSIGNED NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Cadastro inicial das modalidades disponíveis no evento.
 INSERT INTO modalidades (nome, descricao, categoria) VALUES
 ('Futsal Masculino', NULL, 'masculino'),
 ('Futsal Feminino', NULL, 'feminino'),
@@ -141,30 +115,136 @@ INSERT INTO modalidades (nome, descricao, categoria) VALUES
 ('Free Fire (E-Games) Misto', 'Modalidade mista de jogos eletrônicos', 'misto'),
 ('Clash Royale (E-Games) Misto', 'Modalidade mista de jogos eletrônicos', 'misto');
 
+-- Quantidade mínima e máxima de atletas
+UPDATE modalidades
+SET
+    minimo_atletas = CASE id
+        WHEN 1 THEN 5
+        WHEN 2 THEN 5
+        WHEN 3 THEN 3
+        WHEN 4 THEN 3
+        WHEN 5 THEN 6
+        WHEN 6 THEN 6
+        WHEN 7 THEN 1
+        WHEN 8 THEN 1
+        WHEN 9 THEN 6
+        WHEN 10 THEN 7
+        WHEN 11 THEN 1
+        WHEN 12 THEN 1
+        WHEN 13 THEN 1
+        WHEN 14 THEN 1
+        WHEN 15 THEN 1
+    END,
 
--- ============================================================
--- 3. TABELA: USUARIOS
--- Armazena as contas de acesso ao sistema.
---
--- Perfis disponíveis:
--- - admin: administra o sistema.
--- - arbitro: controla as partidas autorizadas.
--- - representante: gerencia os dados da própria turma.
---
--- turma_id é utilizado pelos representantes.
--- Administradores e árbitros podem permanecer sem turma.
---
--- Não são criadas contas automaticamente neste script.
--- ============================================================
+    maximo_atletas = CASE id
+        WHEN 1 THEN 9
+        WHEN 2 THEN 9
+        WHEN 3 THEN 5
+        WHEN 4 THEN 5
+        WHEN 5 THEN 7
+        WHEN 6 THEN 7
+        WHEN 7 THEN 1
+        WHEN 8 THEN 1
+        WHEN 9 THEN 8
+        WHEN 10 THEN 8
+        WHEN 11 THEN 1
+        WHEN 12 THEN 2
+        WHEN 13 THEN 2
+        WHEN 14 THEN 2
+        WHEN 15 THEN 2
+    END
+WHERE id BETWEEN 1 AND 15;
+
+-- Configurações de cada modalidade
+
+-- Futsal
+UPDATE modalidades
+SET formato_partida = 'periodos',
+    duracao_periodo_segundos = 480,
+    quantidade_periodos = 2,
+    intervalo_segundos = 90
+WHERE id IN (1, 2);
+
+-- Basquete
+UPDATE modalidades
+SET formato_partida = 'tempo_pontos',
+    duracao_periodo_segundos = NULL,
+    quantidade_periodos = NULL,
+    intervalo_segundos = 0,
+    limite_pontos = 21,
+    duracao_maxima_segundos = 600
+WHERE id IN (3, 4);
+
+-- Handebol
+UPDATE modalidades
+SET formato_partida = 'periodos',
+    duracao_periodo_segundos = 360,
+    quantidade_periodos = 2,
+    intervalo_segundos = 90
+WHERE id IN (5, 6);
+
+-- Tênis de mesa
+UPDATE modalidades
+SET formato_partida = 'sets',
+    quantidade_sets = 3,
+    pontos_por_set = 11,
+    pontos_set_decisivo = 11
+WHERE id IN (7, 8);
+
+-- Vôlei
+UPDATE modalidades
+SET formato_partida = 'sets',
+    quantidade_sets = 3,
+    pontos_por_set = 12,
+    pontos_set_decisivo = 10
+WHERE id = 9;
+
+-- Queimada
+UPDATE modalidades
+SET formato_partida = 'eliminacao',
+    duracao_maxima_segundos = 420
+WHERE id = 10;
+
+-- Xadrez
+UPDATE modalidades
+SET formato_partida = 'tempo_individual',
+    duracao_maxima_segundos = 600
+WHERE id = 11;
+
+-- EAFC
+UPDATE modalidades
+SET formato_partida = 'periodos',
+    duracao_periodo_segundos = 240,
+    quantidade_periodos = 2,
+    intervalo_segundos = 0
+WHERE id = 12;
+
+-- Brawl Stars e Free Fire
+UPDATE modalidades
+SET formato_partida = 'eliminacao',
+    duracao_maxima_segundos = NULL
+WHERE id IN (13, 14);
+
+-- Clash Royale
+UPDATE modalidades
+SET formato_partida = 'coroas'
+WHERE id = 15;
+
+-- =========================================================
+-- 3. USUARIOS
+-- =========================================================
 
 CREATE TABLE usuarios (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
     usuario_login VARCHAR(50) NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
+
     perfil ENUM('admin', 'arbitro', 'representante') NOT NULL,
+
     turma_id INT UNSIGNED NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY uq_usuarios_login (usuario_login),
@@ -175,36 +255,33 @@ CREATE TABLE usuarios (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- As contas serão cadastradas pelo sistema.
+-- Não existem usuários criados automaticamente.
 
--- ============================================================
--- 4. TABELA: ATLETAS
--- Armazena os estudantes cadastrados pelas turmas.
---
--- O cadastro depende de aprovação administrativa.
---
--- status_aprovacao:
--- - pendente: aguardando análise.
--- - aprovado: liberado para inscrição.
--- - rejeitado: cadastro não aprovado.
---
--- aprovado_por identifica o administrador responsável
--- pela análise do cadastro.
--- ============================================================
+-- =========================================================
+-- 4. ATLETAS
+-- =========================================================
 
 CREATE TABLE atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
+
     sexo ENUM('masculino', 'feminino') NOT NULL,
     numero_camisa TINYINT UNSIGNED NULL,
+
     turma_id INT UNSIGNED NOT NULL,
     cadastrado_por INT UNSIGNED NOT NULL,
+
     status_aprovacao ENUM('pendente', 'aprovado', 'rejeitado')
         NOT NULL DEFAULT 'pendente',
+
     aprovado_por INT UNSIGNED NULL,
     aprovado_em DATETIME NULL,
+
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
-    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     observacao_aprovacao TEXT NULL,
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_atletas_turma (turma_id),
     INDEX idx_atletas_status (status_aprovacao),
@@ -223,31 +300,22 @@ CREATE TABLE atletas (
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- 5. TABELAS: INSCRICOES E INSCRICAO_ATLETAS
---
--- inscricoes:
--- Registra a inscrição de uma turma em determinada modalidade.
---
--- inscricao_atletas:
--- Relaciona os atletas selecionados com suas inscrições.
---
--- A relação entre inscrições e atletas é N:N:
--- uma inscrição possui vários atletas e um atleta pode
--- participar de diferentes modalidades.
---
--- Cada atleta pode aparecer apenas uma vez na mesma inscrição.
--- ============================================================
+-- =========================================================
+-- 5. INSCRICOES
+-- =========================================================
 
 CREATE TABLE inscricoes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     turma_id INT UNSIGNED NOT NULL,
     modalidade_id INT UNSIGNED NOT NULL,
+
     status ENUM('pendente', 'aprovada', 'rejeitada', 'cancelada')
         NOT NULL DEFAULT 'pendente',
+
     observacao TEXT NULL,
     observacao_admin TEXT NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_inscricoes_turma (turma_id),
@@ -263,9 +331,9 @@ CREATE TABLE inscricoes (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
 CREATE TABLE inscricao_atletas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     inscricao_id INT UNSIGNED NOT NULL,
     atleta_id INT UNSIGNED NOT NULL,
 
@@ -281,26 +349,13 @@ CREATE TABLE inscricao_atletas (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- 6. TABELA: PARTIDAS
--- Armazena os confrontos entre duas turmas.
---
--- Contém:
--- - Modalidade e equipes participantes.
--- - Data, horário e local previstos.
--- - Árbitro ou responsável principal.
--- - Configurações de duração e quantidade de períodos.
--- - Placar e horários reais de início e encerramento.
--- - Situação da partida.
--- - Informações de transmissão pelo YouTube.
---
--- Partidas simultâneas são permitidas.
--- Não existe restrição de horário entre partidas diferentes.
--- ============================================================
+-- =========================================================
+-- 6. PARTIDAS
+-- =========================================================
 
 CREATE TABLE partidas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     modalidade_id INT UNSIGNED NOT NULL,
     turma_casa_id INT UNSIGNED NOT NULL,
     turma_visitante_id INT UNSIGNED NOT NULL,
@@ -309,24 +364,68 @@ CREATE TABLE partidas (
     periodo_escolar ENUM('manha', 'tarde') NULL,
     local_partida VARCHAR(120) NULL,
     responsavel_id INT UNSIGNED NULL,
+
+    -- Campos antigos mantidos para compatibilidade
+    -- com o controle de partidas existente.
     duracao_periodo_min SMALLINT UNSIGNED NOT NULL DEFAULT 10,
-    quantidade_periodos TINYINT UNSIGNED NOT NULL DEFAULT 2,
+
+    -- Para modalidades sem períodos, o sistema utiliza 1.
+    quantidade_periodos TINYINT UNSIGNED NOT NULL DEFAULT 1,
+
     intervalo_min SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+
+    -- Configuração do formato salva na partida.
+    formato_partida ENUM(
+        'periodos',
+        'sets',
+        'tempo_pontos',
+        'eliminacao',
+        'tempo_individual',
+        'coroas'
+    ) NOT NULL DEFAULT 'periodos',
+
+    duracao_periodo_segundos SMALLINT UNSIGNED NULL,
+    intervalo_segundos SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+
+    quantidade_sets TINYINT UNSIGNED NULL,
+    pontos_por_set SMALLINT UNSIGNED NULL,
+    pontos_set_decisivo SMALLINT UNSIGNED NULL,
+
+    limite_pontos SMALLINT UNSIGNED NULL,
+    duracao_maxima_segundos SMALLINT UNSIGNED NULL,
 
     inicio_real DATETIME NULL,
     fim_real DATETIME NULL,
+
     placar_casa SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     placar_visitante SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 
-    status ENUM('agendada', 'em_andamento', 'pausada', 'encerrada', 'cancelada')
-        NOT NULL DEFAULT 'agendada',
+    status ENUM(
+        'agendada',
+        'em_andamento',
+        'pausada',
+        'encerrada',
+        'cancelada'
+    ) NOT NULL DEFAULT 'agendada',
+
+    tipo_resultado ENUM('normal', 'wo')
+        NOT NULL DEFAULT 'normal',
+
+    turma_vencedora_id INT UNSIGNED NULL,
 
     youtube_url VARCHAR(500) NULL,
-    youtube_status ENUM('sem_transmissao', 'agendada', 'ao_vivo', 'encerrada')
-        NOT NULL DEFAULT 'sem_transmissao',
+
+    youtube_status ENUM(
+        'sem_transmissao',
+        'agendada',
+        'ao_vivo',
+        'encerrada'
+    ) NOT NULL DEFAULT 'sem_transmissao',
 
     observacoes TEXT NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
@@ -351,26 +450,23 @@ CREATE TABLE partidas (
 
     CONSTRAINT fk_partidas_responsavel
         FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
-        ON UPDATE CASCADE ON DELETE SET NULL
+        ON UPDATE CASCADE ON DELETE SET NULL,
+
+    CONSTRAINT fk_partidas_turma_vencedora
+        FOREIGN KEY (turma_vencedora_id) REFERENCES turmas(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- 7. TABELA: PARTIDAS_ARBITROS
--- Relaciona os árbitros responsáveis por cada partida.
---
--- Relacionamento N:N:
--- - Uma partida pode possuir vários árbitros.
--- - Um árbitro pode atuar em várias partidas.
---
--- O mesmo árbitro não pode ser vinculado duas vezes
--- à mesma partida.
--- ============================================================
+-- =========================================================
+-- 7. ARBITROS DAS PARTIDAS
+-- =========================================================
 
 CREATE TABLE partidas_arbitros (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     partida_id INT UNSIGNED NOT NULL,
     usuario_id INT UNSIGNED NOT NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY uq_partida_arbitro (partida_id, usuario_id),
@@ -385,35 +481,55 @@ CREATE TABLE partidas_arbitros (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =========================================================
+-- 8. ATLETAS VINCULADOS À PARTIDA
+-- =========================================================
 
--- ============================================================
--- 8. TABELA: EVENTOS_PARTIDA
--- Registra as ocorrências realizadas durante uma partida.
---
--- Exemplos:
--- - Gols e pontos.
--- - Assistências.
--- - Cartões.
--- - Substituições.
--- - Correções de placar.
--- - Ocorrências e alterações do cronômetro.
---
--- atleta_id identifica o atleta relacionado ao evento.
--- assistencia_id identifica o atleta responsável pela assistência,
--- quando aplicável.
--- usuario_id identifica quem registrou a ocorrência.
--- ============================================================
+CREATE TABLE partidas_atletas (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    partida_id INT UNSIGNED NOT NULL,
+    atleta_id INT UNSIGNED NOT NULL,
+
+    funcao_inicial ENUM('titular', 'reserva')
+        NOT NULL DEFAULT 'reserva',
+
+    situacao_atual ENUM('em_campo', 'reserva', 'substituido')
+        NOT NULL DEFAULT 'reserva',
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uq_partida_atleta (partida_id, atleta_id),
+    INDEX idx_partidas_atletas_atleta (atleta_id),
+
+    CONSTRAINT fk_partidas_atletas_partida
+        FOREIGN KEY (partida_id) REFERENCES partidas(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+
+    CONSTRAINT fk_partidas_atletas_atleta
+        FOREIGN KEY (atleta_id) REFERENCES atletas(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================================
+-- 9. EVENTOS DA PARTIDA
+-- =========================================================
 
 CREATE TABLE eventos_partida (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     partida_id INT UNSIGNED NOT NULL,
     usuario_id INT UNSIGNED NULL,
+
     atleta_id INT UNSIGNED NULL,
     assistencia_id INT UNSIGNED NULL,
+
     tipo VARCHAR(40) NOT NULL,
     descricao TEXT NOT NULL,
+
     periodo SMALLINT UNSIGNED NULL,
     tempo_segundos INT UNSIGNED NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_eventos_partida (partida_id, criado_em),
@@ -438,26 +554,87 @@ CREATE TABLE eventos_partida (
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =========================================================
+-- 10. EVENTOS DISPONIVEIS POR MODALIDADE
+-- =========================================================
 
--- ============================================================
--- 9. TABELA: ESTADO_PARTIDA
--- Armazena o estado atual do cronômetro de cada partida.
---
--- Permite controlar:
--- - Período atual.
--- - Tempo acumulado.
--- - Momento em que o cronômetro foi iniciado.
--- - Fase atual: jogo, intervalo ou encerrado.
---
--- Cada partida possui apenas um registro de estado.
--- ============================================================
+CREATE TABLE eventos_modalidade (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    modalidade_id INT UNSIGNED NOT NULL,
+
+    tipo_evento VARCHAR(40) NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+
+    pontos_placar SMALLINT NOT NULL DEFAULT 0,
+
+    exige_atleta BOOLEAN NOT NULL DEFAULT TRUE,
+    permite_assistencia BOOLEAN NOT NULL DEFAULT FALSE,
+
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    ordem SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+
+    UNIQUE KEY uq_evento_modalidade (modalidade_id, tipo_evento),
+
+    CONSTRAINT fk_eventos_modalidade
+        FOREIGN KEY (modalidade_id) REFERENCES modalidades(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO eventos_modalidade
+(modalidade_id, tipo_evento, nome, pontos_placar,
+ exige_atleta, permite_assistencia, ativo, ordem)
+VALUES
+
+-- FUTSAL MASCULINO
+(1, 'gol', 'Gol', 1, TRUE, TRUE, TRUE, 1),
+(1, 'cartao_amarelo', 'Cartão amarelo', 0, TRUE, FALSE, TRUE, 2),
+(1, 'cartao_vermelho', 'Cartão vermelho', 0, TRUE, FALSE, TRUE, 3),
+
+-- FUTSAL FEMININO
+(2, 'gol', 'Gol', 1, TRUE, TRUE, TRUE, 1),
+(2, 'cartao_amarelo', 'Cartão amarelo', 0, TRUE, FALSE, TRUE, 2),
+(2, 'cartao_vermelho', 'Cartão vermelho', 0, TRUE, FALSE, TRUE, 3),
+
+-- BASQUETE MASCULINO
+(3, 'cesta_dentro_arco', 'Cesta dentro do arco', 1, TRUE, FALSE, TRUE, 1),
+(3, 'cesta_fora_arco', 'Cesta fora do arco', 2, TRUE, FALSE, TRUE, 2),
+(3, 'lance_livre', 'Lance livre convertido', 1, TRUE, FALSE, TRUE, 3),
+(3, 'falta', 'Falta', 0, TRUE, FALSE, TRUE, 4),
+
+-- BASQUETE FEMININO
+(4, 'cesta_dentro_arco', 'Cesta dentro do arco', 1, TRUE, FALSE, TRUE, 1),
+(4, 'cesta_fora_arco', 'Cesta fora do arco', 2, TRUE, FALSE, TRUE, 2),
+(4, 'lance_livre', 'Lance livre convertido', 1, TRUE, FALSE, TRUE, 3),
+(4, 'falta', 'Falta', 0, TRUE, FALSE, TRUE, 4),
+
+-- HANDEBOL MASCULINO
+(5, 'gol', 'Gol', 1, TRUE, TRUE, TRUE, 1),
+(5, 'cartao_amarelo', 'Cartão amarelo', 0, TRUE, FALSE, TRUE, 2),
+(5, 'cartao_vermelho', 'Cartão vermelho', 0, TRUE, FALSE, TRUE, 3),
+(5, 'exclusao_2min', 'Exclusão de 2 minutos', 0, TRUE, FALSE, TRUE, 4),
+
+-- HANDEBOL FEMININO
+(6, 'gol', 'Gol', 1, TRUE, TRUE, TRUE, 1),
+(6, 'cartao_amarelo', 'Cartão amarelo', 0, TRUE, FALSE, TRUE, 2),
+(6, 'cartao_vermelho', 'Cartão vermelho', 0, TRUE, FALSE, TRUE, 3),
+(6, 'exclusao_2min', 'Exclusão de 2 minutos', 0, TRUE, FALSE, TRUE, 4);
+
+-- =========================================================
+-- 11. ESTADO DO CRONOMETRO
+-- =========================================================
 
 CREATE TABLE estado_partida (
     partida_id INT UNSIGNED NOT NULL,
+
     periodo_atual TINYINT UNSIGNED NOT NULL DEFAULT 1,
     segundos_acumulados INT UNSIGNED NOT NULL DEFAULT 0,
+
     cronometro_iniciado_em DATETIME NULL,
-    fase ENUM('jogo', 'intervalo', 'encerrado') NOT NULL DEFAULT 'jogo',
+
+    fase ENUM('jogo', 'intervalo', 'encerrado')
+        NOT NULL DEFAULT 'jogo',
+
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
@@ -468,31 +645,24 @@ CREATE TABLE estado_partida (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- 10. TABELA: REGULAMENTOS
--- Armazena as seções do regulamento do Interclasse.
---
--- Cada seção possui:
--- - Identificador e endereço amigável (slug).
--- - Título e conteúdo.
--- - Ordem de exibição.
--- - Indicador de ativação.
--- - Administrador responsável pela última atualização.
---
--- As seções são independentes para permitir edição e
--- organização individual, sem consolidar tudo em um documento.
--- ============================================================
+-- =========================================================
+-- 12. REGULAMENTOS
+-- =========================================================
 
 CREATE TABLE regulamentos (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     slug VARCHAR(100) NOT NULL,
     titulo VARCHAR(150) NOT NULL,
     conteudo LONGTEXT NOT NULL,
+
     ordem SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     ativo TINYINT(1) NOT NULL DEFAULT 1,
+
     atualizado_por INT UNSIGNED NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
@@ -504,201 +674,236 @@ CREATE TABLE regulamentos (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Cadastro inicial das seções do regulamento.
 INSERT INTO regulamentos (slug, titulo, conteudo, ordem) VALUES
-('apresentacao', 'Apresentação', 'INTERCLASSE CULTURA DE PAZ
 
-Evento esportivo destinado às turmas do Ensino Médio, com o objetivo de promover a competição saudável, o respeito e a integração entre os estudantes.
+('apresentacao', 'Apresentação', 'INTERCLASSE — 2º SEMESTRE DE 2026
 
-Cada turma poderá participar com sua equipe, mascote, grito de guerra e postura coletiva.
+Ensino Médio
+Duração: 6 dias
+Locais: Quadra interna e externa
 
-As regras serão adaptadas ao contexto escolar para incentivar a participação dos estudantes, independentemente de seu nível de habilidade.
+O Interclasse é um evento esportivo que une as turmas do Ensino Médio em uma semana e meia de competição saudável, respeito mútuo e celebração da diversidade.
 
-A inclusão é obrigatória.', 1),
+Cada turma é uma equipe completa, com postura coletiva dentro e fora da quadra. Todas as modalidades possuem regras adaptadas para garantir que todos participem, independentemente de suas habilidades esportivas.
+
+A inclusão não é opcional, mas uma regra do evento.
+
+REGRAS GERAIS E RESTRIÇÕES
+
+• É proibido emprestar alunos para completar equipes de outras turmas.
+• A modalidade Badminton foi removida.
+• As músicas voltarão a tocar nos intervalos dos jogos.
+• Os banheiros utilizados serão os localizados em frente à quadra.
+• Alunos com advertência ou suspensão no prontuário durante o ano letivo não poderão participar do evento.
+• Alunos que estejam em Conselho de Escola também não poderão jogar.
+• A ausência de jogadores fora da quadra poderá resultar em W.O. após ultrapassada a tolerância de 5 minutos.
+• O técnico deverá ter menos de 18 anos e apresentar RG na bancada para poder jogar.
+• Gestos ofensivos, como dedo do meio, e ofensas poderão resultar em punições de W.O.', 1),
 
 ('objetivos', 'Objetivos e valores', 'O Interclasse tem como objetivos:
 
-• Promover uma cultura de paz.
-• Incentivar o protagonismo, a liderança e a responsabilidade.
-• Desenvolver o espírito esportivo: saber vencer com humildade e perder com respeito.
-• Incentivar a inclusão e o respeito às diferenças.
-• Valorizar o respeito aos atletas, árbitros, professores e organização.
-• Fortalecer a identidade e o trabalho em equipe das turmas.
-• Integrar esporte, arte e cultura.
-• Zelar pela limpeza e organização dos espaços utilizados.
-• Valorizar atitudes positivas também diante dos adversários.
+• Promover a competição como valor central do campeonato.
+• Desenvolver protagonismo, liderança e responsabilidade entre os estudantes.
+• Jogar com esportividade: ganhar com humildade e perder com grandeza.
+• Garantir a participação dos alunos, respeitando habilidades e limitações.
+• Tratar todos os participantes, árbitros e professores com respeito e dignidade.
+• Fortalecer a identidade e o espírito de equipe de cada turma.
+• Integrar esportes, arte e expressão cultural em um mesmo evento.
+• Incluir os membros da equipe nas atividades, sem exclusão por habilidade.
+• Zelar pelos espaços coletivos, deixando-os sempre limpos e organizados.
+• Reconhecer e valorizar as boas atitudes dos adversários.
+• Mediar conflitos com responsabilidade de cada capitão de turma.
 
-Os capitães devem auxiliar na mediação de conflitos.
+A exclusão de participantes não será tolerada e poderá resultar em punição para a equipe.
 
-A exclusão de participantes não será tolerada e poderá acarretar W.O., conforme decisão da organização.
+Ao final do evento, deverá ser realizada uma fotografia coletiva com todos os finalistas, independentemente do resultado.', 2),
 
-As turmas deverão respeitar o Manual do Aluno do Centro Paula Souza.
-
-Ao final, deverá ser realizada uma fotografia coletiva com os finalistas.', 2),
-
-('premiacao', 'Premiação', 'A premiação será destinada somente aos campeões de cada modalidade.
+('premiacao', 'Premiação', 'Será premiada apenas a equipe campeã de cada modalidade, recebendo:
 
 • Troféu personalizado por modalidade.
-• Reconhecimento de melhor jogador(a) por modalidade.
-• Medalhas de ouro para todos os atletas inscritos nas equipes campeãs.
-• Divulgação de fotografias nas redes sociais do evento.
+• Medalhas de ouro para todos os jogadores inscritos na equipe campeã.
+• Divulgação de fotografias nas redes sociais do Grêmio Estudantil Prisma ZL.', 3),
 
-A sequência da premiação será organizada em ordem crescente, deixando as equipes campeãs para o encerramento.
+('penalidades', 'Punições e penalidades', 'As seguintes infrações estão sujeitas às respectivas punições:
 
-A cerimônia de encerramento contará com a participação dos campeões.
+USO DE JOGADOR IRREGULAR
+Punição: eliminação da equipe da modalidade.
 
-Não haverá premiação ou cerimônia específica para segundo e terceiro lugares.', 3),
+AGRESSÃO FÍSICA OU VERBAL A JOGADOR, ÁRBITRO OU COMISSÃO
+Punição: expulsão imediata e suspensão do evento.
 
-('penalidades', 'Punições e penalidades', 'Esta seção deverá ser preenchida pela organização do Interclasse.', 4),
+CARTÃO VERMELHO DIRETO OU REINCIDÊNCIA DE ADVERTÊNCIAS
+Punição: suspensão do próximo jogo.
 
-('futsal-masculino', 'Futsal masculino', 'Regulamento de referência: regras adaptadas da CBFS.
+W.O. SEM JUSTIFICATIVA
+Punição: derrota automática.
+
+INTERFERÊNCIA EXTERNA (TORCIDA, EX-ALUNO ETC.)
+Punição: advertência e possível desclassificação da equipe da modalidade.
+
+Outras situações poderão ser analisadas pela organização do Interclasse.', 4),
+
+('futsal-masculino', 'Futsal masculino', 'Regras da CBFS adaptadas.
 
 • Duração: 2 tempos de 8 minutos corridos.
 • Intervalo: 1 minuto e 30 segundos.
-• Formação: 5 jogadores em quadra e até 4 reservas.
-• Substituições: ilimitadas.
-• Decisão em eliminatórias: disputa de pênaltis, com 3 cobranças por equipe e, se necessário, cobranças alternadas.
-• Faltas acumuladas: a partir da 5ª falta por tempo, será cobrada falta direta sem barreira.
-• Cartões: amarelo como advertência e vermelho como expulsão.', 5),
+• Formação: 5 jogadores em quadra e 4 reservas.
+• Substituições: livres e ilimitadas.
+• Eliminatórias: disputa de pênaltis, com 3 cobranças por equipe e cobranças alternadas, se necessário.
+• Faltas acumulativas: a partir da 5ª falta por tempo, será cobrado tiro livre sem barreira.
+• Cartão amarelo: advertência.
+• Cartão vermelho: expulsão do jogo.', 5),
 
-('futsal-feminino', 'Futsal feminino', 'Regulamento de referência: regras adaptadas da CBFS.
+('futsal-feminino', 'Futsal feminino', 'Regras da CBFS adaptadas.
 
 • Duração: 2 tempos de 8 minutos corridos.
 • Intervalo: 1 minuto e 30 segundos.
-• Formação: 5 jogadoras em quadra e até 4 reservas.
-• Substituições: ilimitadas.
-• Decisão em eliminatórias: disputa de pênaltis, com 3 cobranças por equipe e, se necessário, cobranças alternadas.
-• Faltas acumuladas: a partir da 5ª falta por tempo, será cobrada falta direta sem barreira.
-• Cartões: amarelo como advertência e vermelho como expulsão.', 6),
+• Formação: 5 jogadoras em quadra e 4 reservas.
+• Substituições: livres e ilimitadas.
+• Eliminatórias: disputa de pênaltis, com 3 cobranças por equipe e cobranças alternadas, se necessário.
+• Faltas acumulativas: a partir da 5ª falta por tempo, será cobrado tiro livre sem barreira.
+• Cartão amarelo: advertência.
+• Cartão vermelho: expulsão do jogo.', 6),
 
-('basquete-masculino', 'Basquetebol masculino', 'Regulamento de referência: regras adaptadas da FIBA.
-
-• Duração: 10 minutos corridos ou até uma equipe alcançar 21 pontos.
-• Pontuação: arremessos dentro do arco valem 1 ponto; fora do arco valem 2 pontos.
-• Formação: 3 jogadores em quadra e até 2 reservas.
-• Substituições: ilimitadas.
-• Faltas: a partir da 5ª falta acumulada, o jogador será retirado da partida.
-• Empate: decisão por lances livres.', 7),
-
-('basquete-feminino', 'Basquetebol feminino', 'Regulamento de referência: regras adaptadas da FIBA.
-
-• Duração: 10 minutos corridos ou até uma equipe alcançar 21 pontos.
-• Pontuação: arremessos dentro do arco valem 1 ponto; fora do arco valem 2 pontos.
-• Formação: 3 jogadoras em quadra e até 2 reservas.
-• Substituições: ilimitadas.
-• Faltas: a partir da 5ª falta acumulada, a jogadora será retirada da partida.
-• Empate: decisão por lances livres.', 8),
-
-('handebol-masculino', 'Handebol masculino', 'Regulamento de referência: regras adaptadas da IHF.
+('handebol-masculino', 'Handebol masculino', 'Regras da IHF adaptadas.
 
 • Duração: 2 tempos de 6 minutos corridos.
 • Intervalo: 1 minuto e 30 segundos.
-• Formação: 7 jogadores em quadra e até 1 reserva.
-• Substituições: ilimitadas.
-• Empate: cobranças de 7 metros, com 3 cobranças por equipe e, se necessário, cobranças alternadas.
-• Faltas acumuladas: a partir da 5ª por tempo, tiro livre de 7 metros.
-• Cartões: amarelo como advertência e vermelho como expulsão.', 9),
+• Formação: 6 jogadores em quadra e 1 reserva.
+• Substituições: livres e ilimitadas.
+• Empate: disputa de 7 metros, com 3 cobranças por equipe e cobranças alternadas, se necessário.
+• Faltas acumulativas: a partir da 5ª falta por tempo, tiro livre de 7 metros.
+• Cartão amarelo: advertência.
+• Cartão vermelho: expulsão do jogo.', 7),
 
-('handebol-feminino', 'Handebol feminino', 'Regulamento de referência: regras adaptadas da IHF.
+('handebol-feminino', 'Handebol feminino', 'Regras da IHF adaptadas.
 
 • Duração: 2 tempos de 6 minutos corridos.
 • Intervalo: 1 minuto e 30 segundos.
-• Formação: 7 jogadoras em quadra e até 1 reserva.
-• Substituições: ilimitadas.
-• Empate: cobranças de 7 metros, com 3 cobranças por equipe e, se necessário, cobranças alternadas.
-• Faltas acumuladas: a partir da 5ª por tempo, tiro livre de 7 metros.
-• Cartões: amarelo como advertência e vermelho como expulsão.', 10),
+• Formação: 6 jogadoras em quadra e 1 reserva.
+• Substituições: livres e ilimitadas.
+• Empate: disputa de 7 metros, com 3 cobranças por equipe e cobranças alternadas, se necessário.
+• Faltas acumulativas: a partir da 5ª falta por tempo, tiro livre de 7 metros.
+• Cartão amarelo: advertência.
+• Cartão vermelho: expulsão do jogo.', 8),
 
-('volei-misto', 'Voleibol misto', 'Regulamento de referência: regras adaptadas da FIVB.
+('volei-misto', 'Voleibol misto', 'Regras da FIVB adaptadas.
 
-• Partida em melhor de 3 sets.
-• Sets até 12 pontos, com diferença mínima de 2 pontos.
-• Set decisivo até 10 pontos.
-• Formação: 6 jogadores em quadra e até 2 reservas.
-• Sistema de rotação 6x0, para que todos participem das posições.
-• Substituições: ilimitadas.
-• Desempate: a redação do regulamento anterior deverá ser revisada pela organização.', 11),
+• Formato: melhor de 3 sets, com sets de 12 pontos e diferença mínima de 2 pontos. O set decisivo será de 10 pontos.
+• Formação: 6 jogadores em quadra e 2 reservas.
+• Posicionamento e rotação: sistema 6x0, no qual todos os participantes rodam e jogam em todas as posições, garantindo oportunidades iguais de aprendizagem, de acordo com os conteúdos trabalhados na escola.
+• Substituições: livres e ilimitadas.
+• Eliminatórias: prorrogação de Zerou vai à 2, com diferença de 2 pontos.', 9),
 
-('queimada-mista', 'Queimada mista', 'Regulamento adaptado ao contexto escolar.
+('basquete-masculino', 'Basquetebol masculino', 'Regras da FIBA adaptadas.
 
-• Formação: 7 participantes por equipe em quadra, com 1 reserva.
-• Duração: 7 minutos ou até a eliminação de toda a equipe adversária.
-• Eliminação: ocorre quando o participante é atingido por uma bola lançada e não consegue se defender.
-• Proteção: o regulamento anterior prevê proteção pelas palmas das mãos e pela cabeça, além de não considerar o impacto quando a bola toca o chão antes.
-• Empate: prorrogação em que a primeira eliminação decide a partida.
+• Duração: 10 minutos corridos ou até uma equipe atingir 21 pontos.
+• Pontuação: cestas dentro do arco valem 1 ponto; fora do arco valem 2 pontos.
+• Formação: 3 jogadores em quadra e 2 reservas.
+• Substituições: livres e ilimitadas.
+• Faltas acumulativas: a partir da 5ª falta, o jogador será ejetado do jogo.
+• Empate: disputa de lances livres.', 10),
 
-A organização deverá revisar e confirmar os critérios de proteção antes da publicação definitiva.', 12),
+('basquete-feminino', 'Basquetebol feminino', 'Regras da FIBA adaptadas.
 
-('tenis-mesa-masculino', 'Tênis de mesa masculino', 'Regulamento de referência: regras adaptadas da ITTF.
+• Duração: 10 minutos corridos ou até uma equipe atingir 21 pontos.
+• Pontuação: cestas dentro do arco valem 1 ponto; fora do arco valem 2 pontos.
+• Formação: 3 jogadoras em quadra e 2 reservas.
+• Substituições: livres e ilimitadas.
+• Faltas acumulativas: a partir da 5ª falta, a jogadora será ejetada do jogo.
+• Empate: disputa de lances livres.', 11),
 
-• Partida em melhor de 3 sets.
-• Sets até 11 pontos, com diferença mínima de 2 pontos.
-• Saque alternado a cada 2 pontos.
+('queimada-mista', 'Queimada mista', 'Regras adaptadas ao ambiente escolar.
+
+• Formação: 7 participantes por equipe em quadra e 1 reserva.
+• Duração: 7 minutos ou até a eliminação total de uma equipe.
+• Proteção: apenas as palmas das mãos e a cabeça evitam uma eliminação. Também não ocorre eliminação quando a bola toca o chão antes de atingir o jogador.
+• Eliminação: ocorre quando o jogador é atingido por uma bola lançada sem conseguir se defender.
+• Empate: prorrogação em que a primeira eliminação decide o vencedor.', 12),
+
+('tenis-mesa-masculino', 'Tênis de mesa masculino', 'Regras da ITTF adaptadas.
+
+• Partidas: melhor de 3 sets, com até 11 pontos e diferença mínima de 2 pontos.
+• Saques: alternância a cada 2 pontos.
 • Após o empate em 10 a 10, o saque alterna a cada ponto.
-• O critério de desempate adicional deverá ser confirmado pela organização.', 13),
+• Empate: set extra único de 11 pontos.', 13),
 
-('tenis-mesa-feminino', 'Tênis de mesa feminino', 'Regulamento de referência: regras adaptadas da ITTF.
+('tenis-mesa-feminino', 'Tênis de mesa feminino', 'Regras da ITTF adaptadas.
 
-• Partida em melhor de 3 sets.
-• Sets até 11 pontos, com diferença mínima de 2 pontos.
-• Saque alternado a cada 2 pontos.
+• Partidas: melhor de 3 sets, com até 11 pontos e diferença mínima de 2 pontos.
+• Saques: alternância a cada 2 pontos.
 • Após o empate em 10 a 10, o saque alterna a cada ponto.
-• O critério de desempate adicional deverá ser confirmado pela organização.', 14),
+• Empate: set extra único de 11 pontos.', 14),
 
-('xadrez-misto', 'Xadrez misto', 'Regulamento de referência: regras adaptadas da CBX.
+('xadrez-misto', 'Xadrez misto', 'Regras da CBX adaptadas.
 
-• Relógio digital ou aplicativo.
-• Tempo de 10 minutos para cada jogador.
-• Vitória por xeque-mate, término do tempo do adversário ou desistência.
+• Tempo: relógio digital ou aplicativo, com 10 minutos por jogador.
+• Vitória: ocorre por xeque-mate, tempo excedido ou desistência.
 • Empate: partida Blitz de 5 minutos.', 15),
 
-('eafc-misto', 'EAFC FIFA 26 — E-Games misto', '• Partida única.
-• Duração: 2 tempos de 3 minutos.', 16),
+('eafc-misto', 'EAFC FIFA 26 — E-Games misto', '• Formato: partidas 1x1 ou 2x2.
+• Partida única.
+• Duração: 2 tempos de 4 minutos cada.', 16),
 
-('brawl-stars-misto', 'Brawl Stars — E-Games misto', '• Partida em melhor de 3.
-• Vence a equipe que eliminar todos os adversários, conforme o modo de jogo definido pela organização.', 17),
+('brawl-stars-misto', 'Brawl Stars — E-Games misto', '• Formato: partidas 1x1 ou 2x2.
+• Vence a equipe que eliminar todos os inimigos.', 17),
 
-('free-fire-misto', 'Free Fire — E-Games misto', '• Vence a equipe que eliminar todos os adversários, conforme o modo de jogo definido pela organização.', 18),
+('free-fire-misto', 'Free Fire — E-Games misto', '• Formato: partidas 1x1 ou 2x2.
+• Vence a equipe que eliminar todos os inimigos.', 18),
 
-('clash-royale-misto', 'Clash Royale — E-Games misto', '• Partida única.
-• Vence a equipe que conquistar o maior número de coroas.', 19),
+('clash-royale-misto', 'Clash Royale — E-Games misto', '• Formato: partidas 1x1 ou 2x2.
+• Vence a equipe que conquistar mais coroas do adversário.', 19),
 
-('pontuacao', 'Sistema de pontuação', 'Esta seção deverá ser preenchida pela organização do Interclasse.', 20),
+('pontuacao', 'Sistema de pontuação', 'A pontuação será atribuída conforme o resultado de cada partida:
 
-('organizacao', 'Organização e funções', 'Coordenação geral: Professor de Educação Física.
+• Vitória: 3 pontos.
+• Empate: 1 ponto.
+• Derrota: 0 pontos.
+• W.O.: derrota automática.', 20),
 
-Comissão de esportes: Atlética da Zona Leste.
+('organizacao', 'Organização e funções', 'COORDENADOR GERAL
+Responsabilidade: supervisionar o evento e resolver os conflitos maiores.
 
-As atribuições incluem supervisionar o evento, resolver conflitos, organizar as modalidades e atuar na arbitragem, conforme a modalidade e a necessidade de acompanhamento dos professores.', 21);
+PROFESSOR DE EDUCAÇÃO FÍSICA
+Responsabilidade: apitar o jogo, aplicar as regras e apitar as infrações.
 
+COMISSÃO DE ESPORTES
+Responsabilidade: organizar e apitar os esportes sem contato.
 
--- ============================================================
--- 11. TABELA: HISTORICO_REGULAMENTOS
--- Armazena versões anteriores e registros de alterações
--- realizadas nas seções do regulamento.
---
--- Cada registro preserva:
--- - Seção relacionada.
--- - Usuário responsável pela alteração.
--- - Número da versão.
--- - Tipo de ação realizada.
--- - Título e conteúdo registrados naquele momento.
---
--- ON DELETE RESTRICT impede excluir uma seção que possua
--- histórico associado.
---
--- Para ocultar uma seção da página pública, utilize ativo = 0.
--- ============================================================
+ATLÉTICA DA ZONA LESTE
+Responsabilidade: apitar com o professor nos esportes de contato.
+
+GRÊMIO PRISMA ZL
+Responsabilidade: marcar resultados, registrar punições e controlar o som.
+
+TORCIDA DAS TURMAS
+Responsabilidade: permanecer na quadra e apoiar os times de sua sala.
+
+JOGADORES DAS EQUIPES
+Responsabilidade: respeitar o Manual do Aluno do CPS e o Regulamento do Interclasse.', 21);
+
+-- =========================================================
+-- 13. HISTORICO DOS REGULAMENTOS
+-- =========================================================
 
 CREATE TABLE historico_regulamentos (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     regulamento_id INT UNSIGNED NOT NULL,
     usuario_id INT UNSIGNED NULL,
+
     versao INT UNSIGNED NOT NULL,
-    acao ENUM('criacao', 'edicao', 'importacao_pdf', 'restauracao') NOT NULL,
+
+    acao ENUM(
+        'criacao',
+        'edicao',
+        'importacao_pdf',
+        'restauracao'
+    ) NOT NULL,
+
     titulo VARCHAR(255) NOT NULL,
     conteudo LONGTEXT NOT NULL,
+
     criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_historico_regulamento (regulamento_id),
@@ -714,68 +919,215 @@ CREATE TABLE historico_regulamentos (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =========================================================
+-- 14. REGRAS DE PONTUACAO DO MVP
+-- =========================================================
 
--- ============================================================
--- 12. TABELA: PARTIDAS_ATLETAS
--- Relaciona os atletas selecionados para cada partida.
---
--- Permite controlar:
--- - Quais atletas fazem parte do elenco da partida.
--- - A função inicial de cada atleta: titular ou reserva.
--- - A situação atual: em campo, reserva ou substituído.
---
--- A restrição UNIQUE impede cadastrar o mesmo atleta
--- duas vezes na mesma partida.
---
--- Esta tabela deve ser criada depois de partidas e atletas,
--- pois depende das duas tabelas por meio de chaves estrangeiras.
--- ============================================================
-
-CREATE TABLE partidas_atletas (
+CREATE TABLE regras_pontuacao_mvp (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    partida_id INT UNSIGNED NOT NULL,
+
+    modalidade_id INT UNSIGNED NOT NULL,
+    tipo_evento VARCHAR(40) NOT NULL,
+
+    pontos SMALLINT NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    UNIQUE KEY uq_regra_mvp (modalidade_id, tipo_evento),
+
+    INDEX idx_regras_mvp_modalidade (modalidade_id),
+
+    CONSTRAINT fk_regra_mvp_modalidade
+        FOREIGN KEY (modalidade_id) REFERENCES modalidades(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO regras_pontuacao_mvp
+(modalidade_id, tipo_evento, pontos, ativo)
+VALUES
+
+-- FUTSAL MASCULINO
+(1, 'gol', 2, TRUE),
+(1, 'assistencia', 1, TRUE),
+(1, 'cartao_amarelo', -2, TRUE),
+(1, 'cartao_vermelho', -3, TRUE),
+
+-- FUTSAL FEMININO
+(2, 'gol', 2, TRUE),
+(2, 'assistencia', 1, TRUE),
+(2, 'cartao_amarelo', -2, TRUE),
+(2, 'cartao_vermelho', -3, TRUE),
+
+-- BASQUETE MASCULINO
+(3, 'cesta_dentro_arco', 2, TRUE),
+(3, 'cesta_fora_arco', 2, TRUE),
+(3, 'lance_livre', 2, TRUE),
+(3, 'assistencia', 1, TRUE),
+(3, 'cartao_amarelo', -2, TRUE),
+(3, 'cartao_vermelho', -3, TRUE),
+
+-- BASQUETE FEMININO
+(4, 'cesta_dentro_arco', 2, TRUE),
+(4, 'cesta_fora_arco', 2, TRUE),
+(4, 'lance_livre', 2, TRUE),
+(4, 'assistencia', 1, TRUE),
+(4, 'cartao_amarelo', -2, TRUE),
+(4, 'cartao_vermelho', -3, TRUE),
+
+-- HANDEBOL MASCULINO
+(5, 'gol', 2, TRUE),
+(5, 'assistencia', 1, TRUE),
+(5, 'cartao_amarelo', -2, TRUE),
+(5, 'cartao_vermelho', -3, TRUE),
+
+-- HANDEBOL FEMININO
+(6, 'gol', 2, TRUE),
+(6, 'assistencia', 1, TRUE),
+(6, 'cartao_amarelo', -2, TRUE),
+(6, 'cartao_vermelho', -3, TRUE),
+
+-- TÊNIS DE MESA MASCULINO
+(7, 'ponto', 2, TRUE),
+
+-- TÊNIS DE MESA FEMININO
+(8, 'ponto', 2, TRUE),
+
+-- VOLEIBOL MISTO
+(9, 'ponto', 2, TRUE),
+(9, 'ace', 2, TRUE),
+(9, 'bloqueio', 2, TRUE),
+(9, 'assistencia', 1, TRUE),
+
+-- QUEIMADA MISTA
+(10, 'eliminacao', 2, TRUE),
+(10, 'defesa', 2, TRUE),
+
+-- XADREZ MISTO
+(11, 'vitoria', 3, TRUE),
+
+-- EAFC FIFA 26
+(12, 'gol', 2, TRUE),
+(12, 'assistencia', 1, TRUE),
+
+-- BRAWL STARS
+(13, 'eliminacao', 2, TRUE),
+
+-- FREE FIRE
+(14, 'eliminacao', 2, TRUE),
+
+-- CLASH ROYALE
+(15, 'coroa', 2, TRUE);
+
+-- =========================================================
+-- 15. MVP DECISOES
+-- =========================================================
+
+CREATE TABLE mvp_decisoes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    modalidade_id INT UNSIGNED NOT NULL,
     atleta_id INT UNSIGNED NOT NULL,
+    decidido_por INT UNSIGNED NOT NULL,
 
-    funcao_inicial ENUM('titular', 'reserva')
-        NOT NULL DEFAULT 'reserva',
+    justificativa TEXT NULL,
 
-    situacao_atual ENUM('em_campo', 'reserva', 'substituido')
-        NOT NULL DEFAULT 'reserva',
+    decidido_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_mvp_modalidade (modalidade_id),
 
-    UNIQUE KEY uq_partida_atleta (partida_id, atleta_id),
-    INDEX idx_partidas_atletas_atleta (atleta_id),
+    INDEX idx_mvp_decisoes_atleta (atleta_id),
 
-    CONSTRAINT fk_partidas_atletas_partida
-        FOREIGN KEY (partida_id) REFERENCES partidas(id)
-        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_mvp_decisao_modalidade
+        FOREIGN KEY (modalidade_id) REFERENCES modalidades(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
 
-    CONSTRAINT fk_partidas_atletas_atleta
+    CONSTRAINT fk_mvp_decisao_atleta
         FOREIGN KEY (atleta_id) REFERENCES atletas(id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+
+    CONSTRAINT fk_mvp_decisao_usuario
+        FOREIGN KEY (decidido_por) REFERENCES usuarios(id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =========================================================
+-- 16. NOTIFICACOES
+-- =========================================================
 
--- ============================================================
--- 13. CONSULTAS DE CONFERÊNCIA
--- Consultas para verificar a criação das tabelas e os registros
--- iniciais inseridos no banco de dados.
--- ============================================================
+CREATE TABLE notificacoes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    usuario_id INT UNSIGNED NOT NULL,
+
+    tipo VARCHAR(50) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    mensagem TEXT NOT NULL,
+
+    referencia_tipo VARCHAR(50) NULL,
+    referencia_id INT UNSIGNED NULL,
+
+    link VARCHAR(255) NULL,
+
+    lida BOOLEAN NOT NULL DEFAULT FALSE,
+    lida_em DATETIME NULL,
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_notificacoes_usuario (
+        usuario_id,
+        lida,
+        criado_em
+    ),
+
+    INDEX idx_notificacoes_referencia (
+        referencia_tipo,
+        referencia_id
+    ),
+
+    CONSTRAINT fk_notificacoes_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================================
+-- 17. CONFERENCIA FINAL
+-- =========================================================
 
 SHOW TABLES;
 
--- Consulta todas as turmas, organizadas por período e ID.
 SELECT * FROM turmas ORDER BY periodo, id;
 
--- Consulta todas as modalidades cadastradas.
-SELECT * FROM modalidades ORDER BY id;
+SELECT
+    id,
+    nome,
+    categoria,
+    minimo_atletas,
+    maximo_atletas,
+    formato_partida,
+    duracao_periodo_segundos,
+    quantidade_periodos,
+    intervalo_segundos,
+    quantidade_sets,
+    pontos_por_set,
+    pontos_set_decisivo,
+    limite_pontos,
+    duracao_maxima_segundos
+FROM modalidades
+ORDER BY id;
 
--- Consulta as contas de usuário e seus respectivos perfis.
-SELECT id, nome, usuario_login, perfil, turma_id, ativo
-FROM usuarios;
-
--- Consulta as seções do regulamento e sua ordem de exibição.
-SELECT id, titulo, slug, ordem, ativo
+SELECT
+    id,
+    titulo,
+    slug,
+    ordem,
+    ativo
 FROM regulamentos
 ORDER BY ordem;
+
+SELECT
+    id,
+    nome,
+    usuario_login,
+    perfil,
+    turma_id,
+    ativo
+FROM usuarios;
