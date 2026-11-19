@@ -187,3 +187,54 @@ body {
         margin: 10px auto;
     }
 }
+
+/* ===== RESPONSIVIDADE DOS PAINÉIS ===== */
+img, video, iframe {
+    max-width: 100%;
+}
+
+/* Tabelas que ainda não estavam dentro de .table-container */
+.atletas-table,
+.inscricoes-table,
+.page-content .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.page-content .buttons,
+.page-content .field.is-grouped {
+    flex-wrap: wrap;
+}
+
+.page-content .title,
+.page-content .subtitle,
+.page-content td,
+.page-content p {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+    .page-content .box,
+    .page-content .card-content {
+        padding: 14px;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+    }
+
+    .main-nav a,
+    .main-nav .logout {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .logout-form {
+        margin-left: 0;
+    }
+
+    .page-content .button {
+        min-height: 40px;
+    }
+}

@@ -34,6 +34,8 @@ function sqlPartidas(): string
     return "
         SELECT
             p.id, p.status, p.inicio_previsto, p.periodo_escolar,
+            p.modalidade_id, p.turma_casa_id, p.turma_visitante_id,
+            p.turma_vencedora_id, p.tipo_resultado,
             p.local_partida, p.placar_casa, p.placar_visitante,
             p.quantidade_periodos, p.duracao_periodo_min,
             p.youtube_url, p.youtube_status,
@@ -177,4 +179,76 @@ function cartaoPartida(array $p, string $raiz = ''): string
     $html .= '</div></a>';
 
     return $html;
+}
+
+/** Fases do mata-mata (e fase de grupos), na ordem em que acontecem. */
+const FASES_PARTIDA = [
+    'grupos'         => 'Fase de grupos',
+    'oitavas'        => 'Oitavas de final',
+    'quartas'        => 'Quartas de final',
+    'semifinal'      => 'Semifinal',
+    'final'          => 'Final',
+    'terceiro_lugar' => 'Disputa de 3º lugar',
+];
+
+/**
+ * Id da turma vencedora de uma partida encerrada.
+ * Retorna null em caso de empate ou se a partida ainda não terminou.
+ * (W.O. usa turma_vencedora_id, que o admin/árbitro preenche.)
+ */
+function vencedoraPartida(array $p): ?int
+{
+    if (($p['status'] ?? '') !== 'encerrada') {
+        return null;
+    }
+
+    if (!empty($p['turma_vencedora_id'])) {
+        return (int) $p['turma_vencedora_id'];
+    }
+
+    $casa = (int) ($p['placar_casa'] ?? 0);
+    $visitante = (int) ($p['placar_visitante'] ?? 0);
+
+    if ($casa > $visitante) {
+        return (int) $p['turma_casa_id'];
+    }
+    if ($visitante > $casa) {
+        return (int) $p['turma_visitante_id'];
+    }
+
+    return null;
+}
+
+/** Brasão da turma (imagem ou iniciais), no mesmo padrão dos cartões. */
+function brasaoHtml(string $nome, ?string $imagem, string $classeExtra = ''): string
+{
+    $src = brasaoSrc($imagem);
+    $classe = trim('pub-brasao ' . $classeExtra);
+
+    return $src
+        ? '<img class="' . escapar($classe) . '" src="' . escapar($src) . '" alt="" loading="lazy">'
+        : '<span class="' . escapar($classe) . ' pub-brasao--vazio" aria-hidden="true">' . escapar(iniciais($nome)) . '</span>';
+}
+
+/** "cesta_fora_arco" -> "Cesta fora arco" (rótulo simples para tipos de evento). */
+function rotuloTipoEvento(string $tipo): string
+{
+    $mapa = [
+        'gol' => 'Gol',
+        'assistencia' => 'Assistência',
+        'cartao_amarelo' => 'Cartão amarelo',
+        'cartao_vermelho' => 'Cartão vermelho',
+        'cesta_dentro_arco' => 'Cesta dentro do arco',
+        'cesta_fora_arco' => 'Cesta fora do arco',
+        'lance_livre' => 'Lance livre',
+        'ponto' => 'Ponto',
+        'ace' => 'Ace',
+        'bloqueio' => 'Bloqueio',
+        'eliminacao' => 'Eliminação',
+        'defesa' => 'Defesa',
+        'vitoria' => 'Vitória',
+        'coroa' => 'Coroa',
+    ];
+
+    return $mapa[$tipo] ?? ucfirst(str_replace('_', ' ', $tipo));
 }

@@ -30,7 +30,7 @@ $painel = match ($usuarioLogado['perfil'] ?? null) {
           rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="assets/publico.css?v=2">
+    <link rel="stylesheet" href="assets/publico.css?v=3">
 </head>
 <body class="pub-body">
 
@@ -50,6 +50,10 @@ $painel = match ($usuarioLogado['perfil'] ?? null) {
             <div class="navbar-end">
                 <a class="navbar-item <?= $paginaAtual === 'inicio' ? 'is-active' : '' ?>" href="index.php">Início</a>
                 <a class="navbar-item <?= $paginaAtual === 'partidas' ? 'is-active' : '' ?>" href="partidas.php">Partidas</a>
+                <a class="navbar-item <?= $paginaAtual === 'chaveamento' ? 'is-active' : '' ?>" href="chaveamento.php">Chaveamento</a>
+                <a class="navbar-item <?= $paginaAtual === 'ranking' ? 'is-active' : '' ?>" href="ranking.php">Ranking</a>
+                <a class="navbar-item <?= $paginaAtual === 'mvp' ? 'is-active' : '' ?>" href="mvp.php">MVP</a>
+                <a class="navbar-item <?= $paginaAtual === 'placar' ? 'is-active' : '' ?>" href="placar.php">Placar</a>
                 <a class="navbar-item <?= $paginaAtual === 'regulamento' ? 'is-active' : '' ?>" href="regulamento.php">Regulamento</a>
                 <div class="navbar-item">
                     <?php if ($painel): ?>

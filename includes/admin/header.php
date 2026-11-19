@@ -265,6 +265,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
                 <a href="<?= $baseUrl ?>/public/admin/representantes.php">Representantes</a>
                 <a href="<?= $baseUrl ?>/public/admin/arbitros.php">Árbitros</a>
                 <a href="<?= $baseUrl ?>/public/admin/partidas.php">Minhas partidas</a>
+                <a href="<?= $baseUrl ?>/public/admin/fases.php">Fases (chaveamento)</a>
 
                 <form action="<?= $baseUrl ?>/public/logout.php" method="POST" class="logout-form">
 

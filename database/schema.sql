@@ -363,6 +363,10 @@ CREATE TABLE partidas (
     inicio_previsto DATETIME NULL,
     periodo_escolar ENUM('manha', 'tarde') NULL,
     local_partida VARCHAR(120) NULL,
+
+    -- Fase do campeonato (usada no chaveamento público). NULL = não definida.
+    fase ENUM('grupos', 'oitavas', 'quartas', 'semifinal', 'final', 'terceiro_lugar') NULL,
+
     responsavel_id INT UNSIGNED NULL,
 
     -- Campos antigos mantidos para compatibilidade
@@ -431,6 +435,7 @@ CREATE TABLE partidas (
 
     INDEX idx_partidas_status (status),
     INDEX idx_partidas_inicio (inicio_previsto),
+    INDEX idx_partidas_fase (modalidade_id, fase),
     INDEX idx_partidas_modalidade (modalidade_id),
     INDEX idx_partidas_turma_casa (turma_casa_id),
     INDEX idx_partidas_turma_visitante (turma_visitante_id),

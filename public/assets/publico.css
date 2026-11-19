@@ -145,17 +145,6 @@
     }
 }
 
-@media (max-width: 600px) {
-    .pub-marca {
-        font-size: 13px;
-    }
-
-    .pub-marca img {
-        width: 38px;
-        height: 38px;
-    }
-}
-
 /* ===== PÁGINAS PÚBLICAS ===== */
 
 .pub-hero {
@@ -257,7 +246,7 @@
 /* Grade e cartões de partida */
 .pub-grade {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
     gap: 16px;
 }
 
@@ -370,7 +359,7 @@
 
 .pub-info {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
     gap: 16px;
 }
 
@@ -422,7 +411,7 @@
 /* Filtros */
 .pub-filtros {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
     gap: 12px;
     align-items: end;
     background: #ffffff;
@@ -444,6 +433,7 @@
 
 @media (max-width: 600px) {
     .pub-hero {
+        width: calc(100% - 24px);
         margin: 12px 12px 0;
         padding: 32px 16px;
     }
@@ -464,4 +454,300 @@
     .pub-placar--grande {
         font-size: 32px;
     }
+}
+
+
+/* =====================================================================
+   RESPONSIVIDADE (ajustes gerais das páginas públicas)
+   ===================================================================== */
+
+img, video, iframe { max-width: 100%; }
+
+/* Menu: com 8 itens, evita quebrar entre 1024px e 1200px */
+.pub-nav .navbar-end > a.navbar-item {
+    padding: 0 10px;
+    white-space: nowrap;
+}
+
+/* Hero e conteúdo sem encostar nas bordas em telas médias */
+.pub-hero {
+    width: calc(100% - 40px);
+}
+
+@media (max-width: 1248px) {
+    .pub-conteudo { padding: 0 16px; }
+}
+
+.pub-hero .buttons { flex-wrap: wrap; gap: 8px; }
+
+/* Cartão de partida (classes que o PHP já usava, mas não tinham estilo) */
+.pub-card { display: block; min-width: 0; }
+
+.pub-card__topo,
+.pub-card__rodape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.pub-card__topo { margin-bottom: 12px; }
+.pub-card__modalidade { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #5b6b80; }
+.pub-card__rodape { margin-top: 12px; font-size: 12px; color: #5b6b80; }
+.pub-card--ao-vivo { border-color: #d32f2f66; box-shadow: 0 0 0 2px #d32f2f22; }
+
+.pub-time { min-width: 0; }
+.pub-time__nome { overflow-wrap: anywhere; }
+
+.pub-placar { font-size: clamp(22px, 6vw, 26px); }
+.pub-placar--grande { font-size: clamp(32px, 9vw, 44px); }
+
+.pub-placar-grande__topo { flex-wrap: wrap; gap: 8px 12px; }
+
+.pub-timeline li { flex-wrap: wrap; gap: 4px 14px; }
+.pub-timeline__conteudo { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+
+.pub-secao { overflow-wrap: anywhere; }
+
+/* Rodapé público */
+.pub-footer {
+    background: #0b2948;
+    color: #d6e0eb;
+    padding: 18px 16px;
+    text-align: center;
+    font-size: 12px;
+    margin-top: 24px;
+}
+
+/* Alvos de toque confortáveis no celular */
+@media (max-width: 1023px) {
+    .pub-btn-painel { height: 40px; }
+}
+
+@media (max-width: 600px) {
+    .pub-filtros { grid-template-columns: 1fr 1fr; padding: 16px; }
+    .pub-filtros__acoes { grid-column: 1 / -1; }
+    .pub-filtros__acoes .button { flex: 1; height: 40px; }
+
+    .pub-card { padding: 14px 12px; }
+    .pub-brasao { width: 38px; height: 38px; }
+    .pub-brasao--grande { width: 56px; height: 56px; }
+    .pub-time__nome { font-size: 12px; }
+    .pub-placar-grande__topo { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 380px) {
+    .pub-filtros { grid-template-columns: 1fr; }
+}
+
+/* Filtro com um select só (Ranking, MVP, Chaveamento) */
+.pub-filtros--simples { grid-template-columns: minmax(0, 360px) auto; }
+
+@media (max-width: 600px) {
+    .pub-filtros--simples { grid-template-columns: 1fr; }
+}
+
+.pub-nota { margin-top: 14px; font-size: 13px; color: #5b6b80; line-height: 1.5; }
+.pub-nota--destaque { margin: 0 0 16px; padding: 10px 14px; background: #fff4cc; border-radius: 10px; color: #243247; font-size: 14px; }
+
+.pub-brasao--mini { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 6px; font-size: 11px; }
+
+/* =====================================================================
+   TABELAS (Ranking e MVP)
+   ===================================================================== */
+
+.pub-tabela-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.pub-tabela { width: 100%; border-collapse: collapse; font-size: 14px; color: #243247; }
+
+.pub-tabela th,
+.pub-tabela td {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e3eaf3;
+    white-space: nowrap;
+}
+
+.pub-tabela th { font-size: 12px; text-transform: uppercase; color: #5b6b80; }
+
+.pub-tabela .pub-col-turma { text-align: left; white-space: normal; min-width: 150px; }
+.pub-tabela .pub-col-pos { width: 36px; font-weight: 700; color: #5b6b80; }
+
+.pub-turma-linha { display: inline-flex; align-items: center; gap: 10px; }
+
+.pub-pos-1 td { background: #fff8e1; }
+.pub-pos-2 td { background: #f3f6fa; }
+.pub-pos-3 td { background: #fbf1ea; }
+.pub-pos-1 .pub-col-pos { color: #b8860b; }
+
+@media (max-width: 600px) {
+    .pub-tabela { font-size: 13px; }
+    .pub-tabela th, .pub-tabela td { padding: 9px 5px; }
+    .pub-tabela .pub-col-extra { display: none; }
+    .pub-tabela .pub-col-turma { min-width: 0; }
+}
+
+/* MVP confirmado */
+.pub-mvp-card__corpo { display: flex; align-items: center; gap: 14px; }
+.pub-mvp-card__nome { font-weight: 800; color: #0b2948; }
+.pub-mvp-card__turma { font-size: 13px; color: #5b6b80; }
+
+/* =====================================================================
+   CHAVEAMENTO
+   ===================================================================== */
+
+.pub-campea {
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #fff4cc;
+    color: #0b2948;
+    font-size: 18px;
+    text-align: center;
+}
+
+.pub-secao--chave { padding: 20px 16px; }
+
+.pub-chave {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pub-chave__coluna {
+    flex: 1 0 250px;
+    display: flex;
+    flex-direction: column;
+    scroll-snap-align: start;
+}
+
+.pub-chave__titulo {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    color: #0b2948;
+}
+
+.pub-chave__jogos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 14px;
+}
+
+.pub-chave__jogo {
+    display: block;
+    background: #f4f7fb;
+    border: 1px solid #e3eaf3;
+    border-radius: 12px;
+    padding: 8px 10px;
+    color: #243247;
+    transition: box-shadow .2s;
+}
+
+.pub-chave__jogo:hover { box-shadow: 0 6px 16px #0b294822; }
+
+.pub-chave__time { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.pub-chave__time + .pub-chave__time { border-top: 1px dashed #d5deea; }
+.pub-chave__nome { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.pub-chave__placar { font-size: 16px; }
+.pub-chave__time.is-vencedora .pub-chave__nome,
+.pub-chave__time.is-vencedora .pub-chave__placar { color: #1b7f3b; font-weight: 800; }
+
+.pub-chave__info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #5b6b80;
+}
+
+.pub-nota--rolagem { display: none; text-align: center; }
+
+@media (max-width: 768px) {
+    .pub-nota--rolagem { display: block; }
+    .pub-chave__coluna { flex-basis: 78%; }
+}
+
+/* =====================================================================
+   PLACAR PÚBLICO (modo TV)
+   ===================================================================== */
+
+.tv-body {
+    margin: 0;
+    min-height: 100vh;
+    background: #071a31;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.tv-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 12px clamp(12px, 3vw, 32px);
+    background: #0b2948;
+    box-shadow: 0 3px 12px #0004;
+}
+
+.tv-marca { display: flex; align-items: center; gap: 12px; color: #ffffff; font-weight: 800; font-size: clamp(14px, 2.4vw, 22px); }
+.tv-marca:hover { color: #ffffff; }
+.tv-marca img { width: 44px; height: 44px; padding: 3px; border-radius: 8px; background: #ffffff; object-fit: contain; }
+
+.tv-topo__acoes { display: flex; align-items: center; gap: 10px; }
+.tv-relogio { font-size: clamp(18px, 3vw, 28px); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.tv-main { padding: clamp(12px, 3vw, 32px); display: grid; gap: 28px; }
+
+.tv-titulo { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: clamp(20px, 3vw, 32px); font-weight: 800; color: #ffffff; }
+.tv-titulo--menor { font-size: clamp(16px, 2vw, 22px); color: #d8e4f1; }
+
+.tv-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
+.tv-grade--pequena { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+
+.tv-vazio { color: #9fb4cc; font-style: italic; margin: 0; }
+
+.tv-card { background: #0f3a66; border: 1px solid #ffffff22; border-radius: 16px; padding: 18px; }
+.tv-card--aovivo { border-color: #ff5252aa; box-shadow: 0 0 0 2px #ff52523a; }
+
+.tv-card__topo,
+.tv-card__rodape { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; }
+.tv-card__modalidade { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #bcd0e6; }
+.tv-card__rodape { font-size: 14px; color: #bcd0e6; margin-top: 14px; }
+
+.tv-card__confronto { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+
+.tv-time { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.tv-time__nome { font-weight: 800; font-size: clamp(14px, 1.8vw, 20px); overflow-wrap: anywhere; }
+.tv-time .pub-brasao--vazio { background: #ffffff22; color: #ffffff; }
+
+.tv-placar { display: flex; align-items: center; gap: 10px; font-size: clamp(40px, 7vw, 84px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.tv-placar__x { font-size: .4em; color: #9fb4cc; }
+
+.tv-tempo { font-size: clamp(18px, 2.4vw, 28px); font-weight: 800; color: #ffd54f; font-variant-numeric: tabular-nums; }
+
+.tv-card--proxima .tv-placar,
+.tv-card--resultado .tv-placar { font-size: clamp(26px, 3.6vw, 40px); }
+.tv-card--proxima .pub-brasao--grande,
+.tv-card--resultado .pub-brasao--grande { width: 44px; height: 44px; }
+.tv-card--proxima .tv-time__nome,
+.tv-card--resultado .tv-time__nome { font-size: 14px; }
+
+@media (max-width: 600px) {
+    .tv-card { padding: 14px 12px; }
+    .tv-card__confronto { gap: 6px; }
+    .tv-placar { gap: 6px; }
+    .tv-topo__acoes .button { height: 38px; }
 }
