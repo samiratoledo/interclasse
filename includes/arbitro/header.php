@@ -263,9 +263,10 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Árbitro';
             }
         }
     </style>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/public/assets/mobile.css?v=1">
 </head>
 
-<body>
+<body class="painel-arbitro">
 
     <header class="site-header">
 

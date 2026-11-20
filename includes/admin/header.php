@@ -221,9 +221,10 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Administrador';
             }
         }
     </style>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/public/assets/mobile.css?v=1">
 </head>
 
-<body>
+<body class="painel-admin">
 
     <header class="site-header">
 

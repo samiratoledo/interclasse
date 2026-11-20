@@ -1,0 +1,205 @@
+/* =====================================================================
+   AJUSTES MOBILE + CORES DOS PAINÉIS (admin, representante, árbitro)
+   Carregado depois dos <style> dos headers.
+   ===================================================================== */
+
+/* ---------- CORES: ADMIN (fundo azul escuro) ---------- */
+.painel-admin .title,
+.painel-admin .title strong,
+.painel-admin h1, .painel-admin h2, .painel-admin h3,
+.painel-admin h4, .painel-admin h5, .painel-admin h6,
+.painel-admin .box strong,
+.painel-admin .table th {
+    color: #ffffff;
+}
+
+.painel-admin .subtitle,
+.painel-admin .subtitle strong,
+.painel-admin .label,
+.painel-admin .help,
+.painel-admin .heading,
+.painel-admin .content p,
+.painel-admin .box p {
+    color: #d8e4f1;
+}
+
+.painel-admin .box p.title { color: #ffffff; }
+
+.painel-admin .has-text-grey,
+.painel-admin .has-text-grey-light,
+.painel-admin .has-text-grey-dark,
+.painel-admin .has-text-dark,
+.painel-admin .has-text-black {
+    color: #b9c9db !important;
+}
+
+.painel-admin .title.has-text-warning { color: #ffd54f !important; }
+.painel-admin .title.has-text-success { color: #69db8a !important; }
+.painel-admin .title.has-text-danger  { color: #ff8a80 !important; }
+
+.painel-admin .site-footer strong,
+.painel-arbitro .site-footer strong {
+    color: #ffffff;
+}
+
+/* ---------- CORES: REPRESENTANTE (fundo creme) ---------- */
+.painel-rep .title,
+.painel-rep .title strong,
+.painel-rep h1, .painel-rep h2, .painel-rep h3,
+.painel-rep h4, .painel-rep h5, .painel-rep h6 {
+    color: #29231b;
+}
+
+.painel-rep .subtitle,
+.painel-rep .subtitle strong {
+    color: #5b5238;
+}
+
+.painel-rep .label,
+.painel-rep .heading {
+    color: #40391f;
+}
+
+.painel-rep .help,
+.painel-rep .has-text-grey {
+    color: #6a6048 !important;
+}
+
+.painel-rep .table th { color: #40391f; }
+
+/* ---------- TABELAS: rolagem horizontal, sem quebrar letra a letra ---------- */
+.table-container,
+.atletas-table,
+.inscricoes-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .page-content .table th,
+    .page-content .table td {
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+        max-width: none;
+    }
+
+    .table-container > .table,
+    .atletas-table > .table,
+    .inscricoes-table > .table {
+        width: max-content;
+        min-width: 100%;
+    }
+
+    .page-content .table th,
+    .page-content .table td {
+        padding: .55em .7em;
+        font-size: 13px;
+    }
+}
+
+/* ---------- LEVEL (título + contador): alinhado à esquerda ---------- */
+@media (max-width: 768px) {
+    .level {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .level-left,
+    .level-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        width: 100%;
+        margin: 0;
+    }
+
+    .level-left + .level-right { margin-top: 0; }
+
+    .level-item,
+    .level-left .level-item,
+    .level-right .level-item {
+        justify-content: flex-start;
+        margin: 0 !important;
+        text-align: left;
+    }
+
+    .level .title,
+    .level .subtitle {
+        text-align: left;
+        margin-bottom: .35rem;
+    }
+}
+
+/* ---------- FORMULÁRIOS ---------- */
+@media (max-width: 768px) {
+    .page-content .columns { margin-left: 0; margin-right: 0; margin-top: 0; }
+    .page-content .columns > .column { padding: .35rem 0; width: 100%; flex: none; }
+
+    .page-content .field,
+    .page-content .control { min-width: 0; max-width: 100%; }
+
+    .page-content .input,
+    .page-content .textarea,
+    .page-content .select,
+    .page-content .select select {
+        width: 100%;
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .page-content .field.is-grouped,
+    .page-content .field.is-grouped.is-grouped-multiline {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .page-content .field.is-grouped > .control {
+        flex: 1 1 100%;
+        margin: 0;
+    }
+
+    .page-content .field.has-addons { flex-wrap: wrap; }
+    .page-content .field.has-addons .control { flex: 1 1 100%; }
+
+    .page-content .buttons { gap: 8px; }
+    .page-content .buttons .button { flex: 1 1 auto; margin: 0; }
+    .page-content form .button { max-width: 100%; white-space: normal; height: auto; min-height: 40px; }
+
+    .page-content .file,
+    .page-content .file-label { width: 100%; flex-wrap: wrap; }
+    .page-content .file-name { max-width: 100%; }
+
+    .page-content td form { max-width: none; }
+    .page-content td .input,
+    .page-content td .textarea { width: auto; min-width: 220px; font-size: 14px; }
+}
+
+/* ---------- TEXTOS MENORES NO CELULAR ---------- */
+@media (max-width: 600px) {
+    html { font-size: 14px; }
+
+    .page-content .title.is-1 { font-size: 1.9rem; }
+    .page-content .title.is-2 { font-size: 1.65rem; }
+    .page-content .title.is-3 { font-size: 1.4rem; }
+    .page-content .title.is-4 { font-size: 1.25rem; }
+    .page-content .title.is-5 { font-size: 1.1rem; }
+    .page-content .subtitle.is-5 { font-size: 1.05rem; }
+    .page-content .subtitle.is-6 { font-size: .95rem; }
+    .page-content .title,
+    .page-content .subtitle { line-height: 1.25; }
+
+    .page-content .box { padding: 1rem; }
+    .page-content .notification { padding: .9rem 2.4rem .9rem 1rem; font-size: 14px; }
+    .page-content .tag { font-size: 12px; max-width: 100%; height: auto; white-space: normal; }
+    .page-content .heading { font-size: 11px; }
+
+    .main-nav a,
+    .main-nav .logout { font-size: 12px; }
+
+    .brand-title { font-size: 14px; }
+}

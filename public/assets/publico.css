@@ -751,3 +751,48 @@ img, video, iframe { max-width: 100%; }
     .tv-placar { gap: 6px; }
     .tv-topo__acoes .button { height: 38px; }
 }
+
+/* =====================================================================
+   AJUSTES MOBILE (público)
+   ===================================================================== */
+
+/* Rodapé: textos e títulos claros sobre o fundo azul */
+.pub-footer p,
+.pub-footer strong { color: #d6e0eb; margin: 0; }
+.pub-footer strong { color: #ffffff; }
+.pub-footer p + p { margin-top: 4px; }
+
+.pub-tabela-wrap { max-width: 100%; }
+
+.pub-card__rodape > span { min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 768px) {
+    .pub-hero { padding: 36px 20px; }
+    .pub-hero .title { font-size: clamp(1.5rem, 7vw, 2rem); line-height: 1.2; }
+    .pub-hero .subtitle { font-size: 1rem; line-height: 1.4; margin-bottom: 16px; }
+    .pub-conteudo > h1.title { font-size: 1.6rem; }
+}
+
+@media (max-width: 600px) {
+    html { font-size: 14px; }
+
+    .pub-hero { padding: 26px 16px; }
+    .pub-hero .title { font-size: clamp(1.35rem, 7.2vw, 1.75rem); }
+    .pub-hero .subtitle { font-size: .95rem; }
+    .pub-hero .buttons .button { flex: 1 1 100%; }
+
+    .pub-secao__titulo { font-size: 18px; margin-bottom: 14px; padding-bottom: 10px; }
+    .pub-secao { padding: 16px 14px; margin-bottom: 16px; }
+
+    .pub-card__modalidade { font-size: 11px; }
+    .pub-card__rodape { font-size: 11px; justify-content: center; text-align: center; }
+    .pub-placar { font-size: clamp(20px, 6vw, 24px); }
+
+    .pub-tabela { font-size: 12px; }
+    .pub-tabela th { font-size: 11px; }
+
+    .pub-filtros .input,
+    .pub-filtros .select select { font-size: 16px; }
+
+    .pub-footer { font-size: 11px; padding: 16px 12px; }
+}

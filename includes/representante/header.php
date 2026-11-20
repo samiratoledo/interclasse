@@ -10,7 +10,7 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-br" data-theme="dark">
+<html lang="pt-br" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -265,9 +265,10 @@ $nomeUsuario = $_SESSION['usuario']['nome'] ?? 'Representante';
             }
         }
     </style>
+        <link rel="stylesheet" href="<?= $baseUrl ?>/public/assets/mobile.css?v=1">
 </head>
 
-<body>
+<body class="painel-rep">
 
     <header class="site-header">
 

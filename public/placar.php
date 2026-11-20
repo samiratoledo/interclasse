@@ -65,7 +65,7 @@ if (isset($_GET['dados'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="assets/publico.css?v=3">
+    <link rel="stylesheet" href="assets/publico.css?v=4">
 </head>
 
 <body class="tv-body">

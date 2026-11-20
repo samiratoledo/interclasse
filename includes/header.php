@@ -30,7 +30,7 @@ $painel = match ($usuarioLogado['perfil'] ?? null) {
           rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="assets/publico.css?v=3">
+    <link rel="stylesheet" href="assets/publico.css?v=4">
 </head>
 <body class="pub-body">
 

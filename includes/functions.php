@@ -72,13 +72,18 @@ function formatarTempo(int $segundos): string
     return sprintf('%02d:%02d', intdiv($segundos, 60), $segundos % 60);
 }
 
-function formatarDataHora(?string $data): string
+function formatarDataHora(?string $data, bool $comDiaSemana = false): string
 {
     if (!$data) {
         return 'Horário a definir';
     }
     $ts = strtotime($data);
-    return $ts ? date('d/m · H:i', $ts) : 'Horário a definir';
+    if (!$ts) {
+        return 'Horário a definir';
+    }
+    $dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    $prefixo = $comDiaSemana ? $dias[(int) date('w', $ts)] . ', ' : '';
+    return $prefixo . date('d/m · H:i', $ts);
 }
 
 /** Dados que o JavaScript usa para atualizar um cartão de partida. */
@@ -169,7 +174,7 @@ function cartaoPartida(array $p, string $raiz = ''): string
     $html .= '<span data-campo="placar_visitante">' . ($mostrarPlacar ? (int) $p['placar_visitante'] : '–') . '</span></div>';
     $html .= $time($p['visitante_nome'], $p['visitante_imagem']) . '</div>';
     $html .= '<div class="pub-card__rodape">';
-    $html .= '<span data-campo="tempo">' . ($ativa ? 'P' . (int) ($p['periodo_atual'] ?? 1) . ' · ' . formatarTempo(segundosDecorridos($p)) : escapar(formatarDataHora($p['inicio_previsto']))) . '</span>';
+    $html .= '<span data-campo="tempo">' . ($ativa ? 'P' . (int) ($p['periodo_atual'] ?? 1) . ' · ' . formatarTempo(segundosDecorridos($p)) : escapar(formatarDataHora($p['inicio_previsto'], true))) . '</span>';
     if (!empty($p['local_partida'])) {
         $html .= '<span>' . escapar($p['local_partida']) . '</span>';
     }
