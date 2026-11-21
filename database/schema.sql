@@ -686,6 +686,7 @@ INSERT INTO regulamentos (slug, titulo, conteudo, ordem) VALUES
 Ensino Médio
 Duração: 6 dias
 Locais: Quadra interna e externa
+Data: 08/12/2026 até 12/12/2026
 
 O Interclasse é um evento esportivo que une as turmas do Ensino Médio em uma semana e meia de competição saudável, respeito mútuo e celebração da diversidade.
 
@@ -1134,5 +1135,6 @@ SELECT
     usuario_login,
     perfil,
     turma_id,
-    ativo
+    ativo,
+    senha_hash
 FROM usuarios;

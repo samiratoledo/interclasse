@@ -6,7 +6,7 @@ $host = '127.0.0.1';
 $porta = '3306';
 $banco = 'interclasse_etec';
 $usuario = 'root';
-$senha = 'SQL@Dev2134';
+$senha = '';
 
 try {
     $pdo = new PDO(
