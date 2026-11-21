@@ -971,7 +971,7 @@ require_once __DIR__ . '/../../includes/admin/header.php';
             </div>
         </div>
 
-        <div id="configuracaoModalidade" class="notification is-info is-light mt-3"
+        <div id="configuracaoModalidade" class="notification is-info is-dark mt-3"
              style="display:none;">
             <strong class="is-block mb-2">Formato da modalidade</strong>
 

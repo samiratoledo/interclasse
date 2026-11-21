@@ -109,10 +109,146 @@ $paginaAtual = 'partidas';
 require __DIR__ . '/../includes/header.php';
 ?>
 
+
+<style>
+    .pub-controles-pagina {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    #btnTelaCheia {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 8px;
+    }
+
+    /* Remove a linha inferior do cabeçalho nesta página */
+    header,
+    .navbar,
+    .site-header {
+        border-bottom: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Layout em tela cheia */
+    .pub-conteudo.modo-tela-cheia {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+        box-sizing: border-box !important;
+        width: 100vw !important;
+        max-width: none !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        margin: 0 !important;
+        padding: 16px 24px !important;
+        overflow: hidden !important;
+        background: #f5f6f8 !important;
+
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-areas:
+            "controles controles"
+            "placar historico";
+        gap: 16px;
+    }
+
+    .pub-conteudo.modo-tela-cheia > .pub-controles-pagina {
+        grid-area: controles;
+        margin: 0;
+    }
+
+    .pub-conteudo.modo-tela-cheia > .pub-placar-grande {
+        grid-area: placar;
+        width: 100%;
+        min-width: 0;
+        height: 100%;
+        min-height: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .pub-conteudo.modo-tela-cheia > #secaoTimeline {
+        grid-area: historico;
+        display: block !important;
+        width: 100%;
+        min-width: 0;
+        height: 100%;
+        min-height: 0;
+        margin: 0;
+        padding: 20px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        background: #fff;
+        border-radius: 12px;
+    }
+
+    .pub-conteudo.modo-tela-cheia > .pub-secao:not(#secaoTimeline) {
+        display: none !important;
+    }
+
+    .pub-conteudo.modo-tela-cheia .pub-placar--grande {
+        font-size: clamp(3rem, 8vw, 7rem);
+    }
+
+    .pub-conteudo.modo-tela-cheia .pub-time__nome {
+        font-size: clamp(1rem, 2vw, 1.8rem);
+    }
+
+    .pub-conteudo.modo-tela-cheia .pub-brasao--grande {
+        width: clamp(65px, 10vw, 120px);
+        height: clamp(65px, 10vw, 120px);
+    }
+
+    .pub-conteudo.modo-tela-cheia #btnTelaCheia {
+        background: #b42318;
+        border-color: #b42318;
+        color: #fff;
+    }
+
+    @media (max-width: 700px) {
+        .pub-conteudo.modo-tela-cheia {
+            padding: 10px !important;
+            gap: 10px;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: auto minmax(220px, 1fr) minmax(180px, 1fr);
+            grid-template-areas:
+                "controles"
+                "placar"
+                "historico";
+            overflow-y: auto !important;
+        }
+
+        .pub-conteudo.modo-tela-cheia > .pub-placar-grande,
+        .pub-conteudo.modo-tela-cheia > #secaoTimeline {
+            min-height: 180px;
+        }
+
+        .pub-conteudo.modo-tela-cheia > #secaoTimeline {
+            padding: 12px;
+        }
+    }
+</style>
+
+
 <div class="container pub-conteudo" data-partida-id="<?= (int) $partida['id'] ?>" data-detalhe="1">
-    <p class="mb-3">
-        <a href="partidas.php">← Todas as partidas</a>
-    </p>
+    <div class="pub-controles-pagina">
+        <a href="partidas.php" class="button is-light">
+            ← Todas as partidas
+        </a>
+
+        <button type="button" class="button is-primary" id="btnTelaCheia">
+            <span class="icon">⛶</span>
+            <span>Tela cheia</span>
+        </button>
+    </div>
 
     <section class="pub-placar-grande">
 
@@ -309,6 +445,62 @@ require __DIR__ . '/../includes/header.php';
         const status = container.querySelector('[data-campo="status"]');
 
         const secaoTimeline = document.getElementById('secaoTimeline');
+
+        const btnTelaCheia = document.getElementById('btnTelaCheia');
+
+        function atualizarBotaoTelaCheia() {
+            if (!btnTelaCheia) return;
+
+            const ativo = container.classList.contains('modo-tela-cheia');
+            btnTelaCheia.innerHTML = ativo
+                ? '<span class="icon">✕</span><span>Sair da tela cheia</span>'
+                : '<span class="icon">⛶</span><span>Tela cheia</span>';
+        }
+
+        async function alternarTelaCheia() {
+            const ativo = container.classList.contains('modo-tela-cheia');
+
+            if (ativo) {
+                container.classList.remove('modo-tela-cheia');
+
+                if (document.fullscreenElement) {
+                    try {
+                        await document.exitFullscreen();
+                    } catch (erro) {
+                        console.error('Erro ao sair da tela cheia:', erro);
+                    }
+                }
+
+                atualizarBotaoTelaCheia();
+                return;
+            }
+
+            // Aplica primeiro o layout dividido, para que ele funcione
+            // mesmo se o navegador não permitir a API de tela cheia.
+            container.classList.add('modo-tela-cheia');
+            atualizarBotaoTelaCheia();
+
+            if (container.requestFullscreen) {
+                try {
+                    await container.requestFullscreen();
+                } catch (erro) {
+                    console.warn('Tela cheia do navegador indisponível; mantendo o layout expandido.', erro);
+                }
+            }
+        }
+
+        if (btnTelaCheia) {
+            btnTelaCheia.addEventListener('click', alternarTelaCheia);
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            // Se a pessoa sair pelo ESC, restaura o layout normal.
+            if (!document.fullscreenElement) {
+                container.classList.remove('modo-tela-cheia');
+            }
+            atualizarBotaoTelaCheia();
+        });
+
 
         let segundosBase = 0;
         let ativo = false;

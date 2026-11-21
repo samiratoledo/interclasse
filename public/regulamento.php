@@ -56,7 +56,7 @@ if ($painel !== null) {
 <div class="reg-container" id="topo">
 
     <div class="reg-topo">
-        <p class="reg-topo__escola">ETEC DA ZONA LESTE</p>
+        <p class="reg-topo__escola">ETEC ZONA LESTE</p>
         <h1 class="title is-2">Regulamento Interclasse</h1>
         <p>Competir com respeito, crescer com o outro.</p>
     </div>
